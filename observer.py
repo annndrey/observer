@@ -23,7 +23,9 @@ host = 'localhost'
 port = 5432
 passwd = 'andreygon'
 
-station_headers = [u'станция', u'№ в судовом журнале', u'дата постановки', u'время постановки', u'дата выборки', u'время выборки', u'глубина начала', u'глубина конца', u'грунт', u'координаты начала', u'координаты конца', u'глубина начала', u'глубина конца', u'орудие лова', u'вид наживки', u'ячея', u'расстояние между ловушками', u'число ловушек', u'обработано', u'атм. давление, МПа', u'Т возд.,°С', u'V ветра, м/с', u'направление ветра', u'волнение', u'Т воды.,°С' ]
+#надо добавить год, судно, номер рейса, наблюдатель
+
+station_headers = {'station_number':u'станция', 'journ_station':u'№ в судовом журнале', 'begdate':u'дата постановки', 'begtime':u'время постановки', 'enddate':u'дата выборки', 'enttime':u'время выборки', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'bottomcode':u'грунт', 'beglatgrad beglatmin beglonggrad beglongmin':u'координаты начала', 'endlatgrad endlatmin endlonggrad endlongmin':u'координаты конца', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'gearcode':u'орудие лова', '???':u'вид наживки', '????':u'ячея', 'trapdist':u'расстояние между ловушками', 'nlov':u'число ловушек', '?????':u'обработано', 'pressure':u'атм. давление, МПа', 'surfacetemp':u'Т возд.,°С', 'windspeed':u'V ветра, м/с', 'winddirection':u'направление ветра', 'wave':u'волнение', 'temp':u'Т воды.,°С'}
 
 catch_headers = [u'№ станции', u'вид', u'улов', u'комм. улов', u'вес пробы', u'пром. самцы, шт', u'непром. самцы, шт', u'самки, шт', u'комментарий',]
 
@@ -59,14 +61,14 @@ class MainView(QtGui.QMainWindow):
         self.cur = self.conn.cursor()
 
         
-        self.cur.execute(column_names_query % 'crab')
+        self.cur.execute(column_names_query % 'stations')
         
         for i in self.cur.fetchall():
             print i[0]
         
 
         #пока так...
-        self.ui.stationsTableView.setModel(TableModel([range(1,26),], station_headers, self.undoStack, self.conn, self.statusBar, station_headers, self))
+        self.ui.stationsTableView.setModel(TableModel([range(1,26), station_headers.keys(), station_headers.values()], station_headers.values(), self.undoStack, self.conn, self.statusBar, station_headers.keys(), self))
         self.ui.catchTableView.setModel(TableModel([range(1,10),], catch_headers, self.undoStack, self.conn, self.statusBar, catch_headers, self))
         
 
@@ -132,7 +134,7 @@ class TableModel(QtCore.QAbstractTableModel):
         i = index.row()
         j = index.column()
         try:
-            return self.dbdata[i][j].decode("utf-8")
+            return self.dbdata[i][j]#.decode("utf-8")
         except AttributeError:
             return self.dbdata[i][j]
 
