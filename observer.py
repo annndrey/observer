@@ -17,17 +17,18 @@ from psycopg2.extensions import adapt
 
 
 #Настройки БД по умолчанию. Потом брать из файла настроек.
-dbname = "OBSERVERDB"
+dbname = "observer"
 user = 'annndrey'
 host = 'localhost'
 port = 5432
 passwd = 'andreygon'
 
-#надо добавить год, судно, номер рейса, наблюдатель
+#надо добавить год, судно, номер рейса, наблюдатель в станции и уловы и сделать их нередактируемыми. 
 
 station_headers = {'station_number':u'станция', 'journ_station':u'№ в судовом журнале', 'begdate':u'дата постановки', 'begtime':u'время постановки', 'enddate':u'дата выборки', 'enttime':u'время выборки', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'bottomcode':u'грунт', 'beglatgrad beglatmin beglonggrad beglongmin':u'координаты начала', 'endlatgrad endlatmin endlonggrad endlongmin':u'координаты конца', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'gearcode':u'орудие лова', '???':u'вид наживки', '????':u'ячея', 'trapdist':u'расстояние между ловушками', 'nlov':u'число ловушек', '?????':u'обработано', 'pressure':u'атм. давление, МПа', 'surfacetemp':u'Т возд.,°С', 'windspeed':u'V ветра, м/с', 'winddirection':u'направление ветра', 'wave':u'волнение', 'temp':u'Т воды.,°С'}
 
-catch_headers = [u'№ станции', u'вид', u'улов', u'комм. улов', u'вес пробы', u'пром. самцы, шт', u'непром. самцы, шт', u'самки, шт', u'комментарий',]
+#вес пробы - в станции
+catch_headers = {'station_number':u'№ станции', 'species_code':u'вид', 'catch':u'улов', 'commercial_catch':u'комм. улов', 'sampleweigth':u'вес пробы', 'catch_pieces':u'пром. самцы, шт', 'noncommercial_catch':u'непром. самцы, шт', 'catch_females':u'самки, шт', 'comment1':u'комментарий',}
 
 bio_groups = {'krill':u'криль', 'krevet':u'креветки', 'squid':u'головоногие', 'echinoidea':u'ежи', 'crab':u'крабы', 'squid':u'головоногие', 'algae':u'водоросли', 'golotur':u'голотурии', 'molusk':u'брюхоногие', 'pelecipoda':u'двустворчатые'}
 
@@ -61,19 +62,18 @@ class MainView(QtGui.QMainWindow):
         self.cur = self.conn.cursor()
 
         
-        self.cur.execute(column_names_query % 'stations')
+        self.cur.execute(column_names_query % 'catch')
         
         for i in self.cur.fetchall():
             print i[0]
         
 
         #пока так...
-        self.ui.stationsTableView.setModel(TableModel([range(1,26), station_headers.keys(), station_headers.values()], station_headers.values(), self.undoStack, self.conn, self.statusBar, station_headers.keys(), self))
-        self.ui.catchTableView.setModel(TableModel([range(1,10),], catch_headers, self.undoStack, self.conn, self.statusBar, catch_headers, self))
-        
-
-      
-        self.ui.bioTableView.setModel(TableModel([range(1,54),], bio_headers.values(), self.undoStack, self.conn, self.statusBar, bio_headers.values, self))
+        self.ui.stationsTableView.setModel(TableModel([range(1,len(station_headers)), station_headers.keys(), station_headers.values()], station_headers.values(), self.undoStack, self.conn, self.statusBar, station_headers.keys(), self))
+        self.ui.catchTableView.setModel(TableModel([range(1,len(catch_headers)), catch_headers.values(), catch_headers.keys()], catch_headers.values(), self.undoStack, self.conn, self.statusBar, catch_headers.keys(), self))
+    
+    
+        self.ui.bioTableView.setModel(TableModel([range(1,len(bio_headers)), bio_headers.values(), bio_headers.keys()], bio_headers.values(), self.undoStack, self.conn, self.statusBar, bio_headers.keys(), self))
 
 
         #Delegate работает
@@ -90,7 +90,7 @@ class MainView(QtGui.QMainWindow):
         #self.hideColumns(self.ui.bioTableView, [1,2,3,4,5,6,7])
         
     def test(self):
-        self.ui.bioTableView.model().insertRow(self.ui.bioTableView.currentIndex(), 1)
+        self.ui.bioTableView.model().insertRow(self.ui.bioTableView.currentIndex(), len(self.ui.bioTableView.model().dbdata))
 
     def hideColumns(self, table, columns):
         
@@ -207,12 +207,12 @@ class ColumnDelegate(QtGui.QItemDelegate):
         #для изменения поведения.
 
     def createEditor(self, parent, option, index):
-        
         return QtGui.QComboBox(parent)
 
     def setEditorData(self, comboBox, index):
-        value = index.model().data(index, QtCore.Qt.EditRole).toInt()[0]
-        comboBox.addItem(QtCore.QString(value))
+        value = index.model().data(index, QtCore.Qt.EditRole)#.toInt()[0]
+        comboBox.addItem(value.toString())
+        print value
         comboBox.setItemText(index.row(), str(value))
 
         def setModelData(self, spinBox, model, index):
