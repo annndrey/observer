@@ -52,6 +52,30 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
+         <widget class="QComboBox" name="comboBox">
+          <item>
+           <property name="text">
+            <string>crab</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>krill</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>krevet</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>craboid</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
          <widget class="QTableView" name="bioTableView"/>
         </item>
        </layout>
@@ -69,8 +93,161 @@
      <height>18</height>
     </rect>
    </property>
+   <widget class="QMenu" name="filemenu">
+    <property name="title">
+     <string>Файл</string>
+    </property>
+    <addaction name="newstation"/>
+    <addaction name="newspecies"/>
+    <addaction name="newbio"/>
+    <addaction name="separator"/>
+    <addaction name="importdata"/>
+    <addaction name="exportdata"/>
+    <addaction name="commitdata"/>
+    <addaction name="separator"/>
+    <addaction name="quitapp"/>
+   </widget>
+   <widget class="QMenu" name="editmenu">
+    <property name="title">
+     <string>Правка</string>
+    </property>
+    <addaction name="undoaction"/>
+    <addaction name="redoaction"/>
+    <addaction name="separator"/>
+    <addaction name="cropaction"/>
+    <addaction name="copyaction"/>
+    <addaction name="insertaction"/>
+    <addaction name="deleteaction"/>
+    <addaction name="selectallaction"/>
+    <addaction name="separator"/>
+    <addaction name="setupaction"/>
+   </widget>
+   <widget class="QMenu" name="listmenu">
+    <property name="title">
+     <string>Списки</string>
+    </property>
+    <addaction name="species"/>
+    <addaction name="gear"/>
+    <addaction name="ground"/>
+    <addaction name="disease"/>
+    <addaction name="observer"/>
+    <addaction name="ship"/>
+   </widget>
+   <addaction name="filemenu"/>
+   <addaction name="editmenu"/>
+   <addaction name="listmenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="newstation">
+   <property name="text">
+    <string>Новая станция</string>
+   </property>
+  </action>
+  <action name="newspecies">
+   <property name="text">
+    <string>Новый вид на станции</string>
+   </property>
+  </action>
+  <action name="newbio">
+   <property name="text">
+    <string>Новый биоанализ</string>
+   </property>
+  </action>
+  <action name="action_5">
+   <property name="text">
+    <string>Настройки</string>
+   </property>
+  </action>
+  <action name="importdata">
+   <property name="text">
+    <string>Импорт</string>
+   </property>
+  </action>
+  <action name="exportdata">
+   <property name="text">
+    <string>Экспорт</string>
+   </property>
+  </action>
+  <action name="commitdata">
+   <property name="text">
+    <string>Сохранить</string>
+   </property>
+  </action>
+  <action name="quitapp">
+   <property name="text">
+    <string>Выйти</string>
+   </property>
+  </action>
+  <action name="undoaction">
+   <property name="text">
+    <string>Отменить</string>
+   </property>
+  </action>
+  <action name="redoaction">
+   <property name="text">
+    <string>Повторить</string>
+   </property>
+  </action>
+  <action name="cropaction">
+   <property name="text">
+    <string>Вырезать</string>
+   </property>
+  </action>
+  <action name="copyaction">
+   <property name="text">
+    <string>Копировать</string>
+   </property>
+  </action>
+  <action name="insertaction">
+   <property name="text">
+    <string>Вставить</string>
+   </property>
+  </action>
+  <action name="deleteaction">
+   <property name="text">
+    <string>Удалить</string>
+   </property>
+  </action>
+  <action name="selectallaction">
+   <property name="text">
+    <string>Выделить все</string>
+   </property>
+  </action>
+  <action name="setupaction">
+   <property name="text">
+    <string>Параметры</string>
+   </property>
+  </action>
+  <action name="species">
+   <property name="text">
+    <string>Виды</string>
+   </property>
+  </action>
+  <action name="gear">
+   <property name="text">
+    <string>Орудия лова</string>
+   </property>
+  </action>
+  <action name="ground">
+   <property name="text">
+    <string>Грунты</string>
+   </property>
+  </action>
+  <action name="disease">
+   <property name="text">
+    <string>Заболевания</string>
+   </property>
+  </action>
+  <action name="observer">
+   <property name="text">
+    <string>Наблюдатели</string>
+   </property>
+  </action>
+  <action name="ship">
+   <property name="text">
+    <string>Суда</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
