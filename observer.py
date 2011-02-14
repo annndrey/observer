@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys
+import sys, operator
 
 from PyQt4 import QtCore, QtGui
 
@@ -17,7 +17,7 @@ from psycopg2.extensions import adapt
 
 
 #Настройки БД по умолчанию. Потом брать из файла настроек.
-dbname = "observer"
+dbname = "OBSERVERDB"
 user = 'annndrey'
 host = 'localhost'
 port = 5432
@@ -74,7 +74,8 @@ class MainView(QtGui.QMainWindow):
     
     
         self.ui.bioTableView.setModel(TableModel([range(1,len(bio_headers)), bio_headers.values(), bio_headers.keys()], bio_headers.values(), self.undoStack, self.conn, self.statusBar, bio_headers.keys(), self))
-
+        self.selectionModel = QtGui.QItemSelectionModel(self.ui.bioTableView.model())
+        self.ui.bioTableView.setSelectionModel(self.selectionModel)
 
         #Delegate работает
         delegate = ColumnDelegate(self.ui.bioTableView.model())
@@ -84,20 +85,31 @@ class MainView(QtGui.QMainWindow):
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
         #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
         #еще раз пишу - надо переделать модель!!! для всех!!!
-
-        self.connect(self.ui.comboBox, QtCore.SIGNAL("activated(int)"), self.test)
-
-        #self.hideColumns(self.ui.bioTableView, [1,2,3,4,5,6,7])
         
-    def test(self):
-        self.ui.bioTableView.model().insertRow(self.ui.bioTableView.currentIndex(), len(self.ui.bioTableView.model().dbdata))
+        
+        self.connect(self.selectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
+
+    def showColumns(self, table, columns):
+        for i in columns:
+            table.showColumn(i)
 
     def hideColumns(self, table, columns):
-        
         for i in columns:
             table.hideColumn(i)
-        
 
+
+    #Вот тут будем добавлять новую строчку после того, как будет достигнут конец строки
+    def appendRow(self, current, prev):
+        maxrow = len(self.ui.bioTableView.model().dbdata)
+        maxcolumn = len(self.ui.bioTableView.model().dbdata[0])
+        #print maxrow
+        #print maxcolumn
+
+        if current.row()+1 == maxrow and current.column()+1 == maxcolumn:
+            print 'row', current.row(), prev.row(), maxrow
+            print 'column', current.column(), prev.column(), maxcolumn
+            
+    
 
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self, datain, headerdata, undostack, conn, statusbar, columns, parent=None, *args):
@@ -108,14 +120,14 @@ class TableModel(QtCore.QAbstractTableModel):
         self.dbdata = datain
         self.header = headerdata
         self.columns = columns
-       
-    def insertRow(self, index, row):
+        
+    def insertRow(self, row, index, parent=QtCore.QModelIndex()):
         new_row = []
         for i in xrange(len(self.dbdata[0])):
             new_row.append("")
-                
-        self.beginInsertRows(index, row, row)
-        self.dbdata.append(new_row)
+        self.beginInsertRows(parent, row, row)
+        
+        self.dbdata.insert(row, new_row)
         self.endInsertRows()
         return True
 
@@ -212,14 +224,13 @@ class ColumnDelegate(QtGui.QItemDelegate):
     def setEditorData(self, comboBox, index):
         value = index.model().data(index, QtCore.Qt.EditRole)#.toInt()[0]
         comboBox.addItem(value.toString())
-        print value
-        comboBox.setItemText(index.row(), str(value))
+        comboBox.setItemText(index.row(), unicode(value.toString()))
 
-        def setModelData(self, spinBox, model, index):
-            spinBox.interpretText()
-            value = spinBox.value()
+    def setModelData(self, comboBox, model, index):
+        #spinBox.interpretText()
+        value = comboBox.currentText()
 
-            model.setData(index, value, QtCore.Qt.EditRole)
+        model.setData(index, value, QtCore.Qt.EditRole)
 
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
@@ -245,6 +256,28 @@ class ColumnDelegate(QtGui.QItemDelegate):
 
     #painter.restore()
 
+
+class EditCommand(QtGui.QUndoCommand):
+    def __init__(self, tablemodel, row, column, columns, prev_value, value, cursor, description):
+        super(EditCommand, self).__init__(description)
+        self.model = tablemodel
+        self.row = row
+        self.column = column
+        self.columns = columns
+        self.prev_value = prev_value
+        self.value = value
+        self.dbdata = self.model.dbdata
+        self.cur = cursor
+
+    def redo(self):
+        index = self.model.index(self.row, self.column)
+        self.dbdata[index.row()][index.column()] = self.value
+        self.model.emit(QtCore.SIGNAL("dataChanged(QModelIndex, QModelIndex)"), index, index)
+
+    def undo(self):
+        index = self.model.index(self.row, self.column)
+        self.model.dbdata[index.row()][index.column()] = self.prev_value
+        self.model.emit(QtCore.SIGNAL("dataChanged(QModelIndex, QModelIndex)"), index, index)
 
 
 
