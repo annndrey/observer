@@ -106,6 +106,7 @@ class MainView(QtGui.QMainWindow):
         #print maxcolumn
 
         if current.row()+1 == maxrow and current.column()+1 == maxcolumn:
+            self.ui.bioTableView.model().insertRow(current.row()+1, current)
             print 'row', current.row(), prev.row(), maxrow
             print 'column', current.column(), prev.column(), maxcolumn
             
