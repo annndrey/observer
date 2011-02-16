@@ -25,14 +25,77 @@ passwd = 'andreygon'
 
 #надо добавить год, судно, номер рейса, наблюдатель в станции и уловы и сделать их нередактируемыми. 
 
-station_headers = {'station_number':u'станция', 'journ_station':u'№ в судовом журнале', 'begdate':u'дата постановки', 'begtime':u'время постановки', 'enddate':u'дата выборки', 'enttime':u'время выборки', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'bottomcode':u'грунт', 'beglatgrad beglatmin beglonggrad beglongmin':u'координаты начала', 'endlatgrad endlatmin endlonggrad endlongmin':u'координаты конца', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'gearcode':u'орудие лова', '???':u'вид наживки', '????':u'ячея', 'trapdist':u'расстояние между ловушками', 'nlov':u'число ловушек', '?????':u'обработано', 'pressure':u'атм. давление, МПа', 'surfacetemp':u'Т возд.,°С', 'windspeed':u'V ветра, м/с', 'winddirection':u'направление ветра', 'wave':u'волнение', 'temp':u'Т воды.,°С'}
+station_headers = [u'станция', u'№ в судовом журнале', u'дата постановки', u'время постановки', u'дата выборки', u'время выборки', u'глубина начала', u'глубина конца', u'грунт', u'координаты начала', u'координаты конца', u'глубина начала', u'глубина конца', u'орудие лова', u'вид наживки', u'ячея', u'расстояние между ловушками', u'число ловушек', u'обработано', u'атм. давление, МПа', u'Т возд.,°С', u'V ветра, м/с', u'направление ветра', u'волнение', u'Т воды.,°С']
+
+station_headers_dict = {'station_number':u'станция', 'journ_station':u'№ в судовом журнале', 'begdate':u'дата постановки', 'begtime':u'время постановки', 'enddate':u'дата выборки', 'enttime':u'время выборки', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'bottomcode':u'грунт', 'beglatgrad beglatmin beglonggrad beglongmin':u'координаты начала', 'endlatgrad endlatmin endlonggrad endlongmin':u'координаты конца', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'gearcode':u'орудие лова', '???':u'вид наживки', '????':u'ячея', 'trapdist':u'расстояние между ловушками', 'nlov':u'число ловушек', '?????':u'обработано', 'pressure':u'атм. давление, МПа', 'surfacetemp':u'Т возд.,°С', 'windspeed':u'V ветра, м/с', 'winddirection':u'направление ветра', 'wave':u'волнение', 'temp':u'Т воды.,°С'}
 
 #вес пробы - в станции
-catch_headers = {'station_number':u'№ станции', 'species_code':u'вид', 'catch':u'улов', 'commercial_catch':u'комм. улов', 'sampleweigth':u'вес пробы', 'catch_pieces':u'пром. самцы, шт', 'noncommercial_catch':u'непром. самцы, шт', 'catch_females':u'самки, шт', 'comment1':u'комментарий',}
 
-bio_groups = {'krill':u'криль', 'krevet':u'креветки', 'squid':u'головоногие', 'echinoidea':u'ежи', 'crab':u'крабы', 'squid':u'головоногие', 'algae':u'водоросли', 'golotur':u'голотурии', 'molusk':u'брюхоногие', 'pelecipoda':u'двустворчатые'}
+catch_headers = [u'№ станции', u'вид', u'улов', u'комм. улов', u'вес пробы', u'пром. самцы, шт', u'непром. самцы, шт', u'самки, шт', u'комментарий',]
 
-bio_headers = {'shellheight':u'высота раковины', 'bodywght':u'общий вес', 'myear':u'год', 'weight':u'вес', 'shelllength':u'длина раковины', 'stageovary':u'стадия зрелости яичника', 'numspec':u'номер особи', 'sex':u'пол', 'kmmweight':u'вес кожно-мускульного мешка', 'comment3':u'комментарий', 'gonadweight':u'вес гонады', 'gonad':u'стадия развития гонады', 'stagepetasma':u'стадия петазмы', 'condgenapert':u'состояние половых отверстий', 'leglost':u'повреждения ног', 'mlength':u'промысловая длина тела', 'stagetelicum':u'стадия теликума', 'sternal':u'стернальные шипы', 'label':u'метка', 'gonadcolor':u'цвет гонад', 'moltingst':u'линочная стадия', 'numstrat':u'номер страты', 'speciescode':u'вид', 'eggs':u'икра', 'bodydiametr':u'диаметр тела', 'gonadindex':u'гонадный индекс', 'stomach':u'наполнение желудка', 'clawhight':u'высота клешни', 'condspf':u'состояние сперматофоров', 'spermball':u'наличие шарика спермы', 'maturstage':u'стадия зрелости', 'vesselcode':u'судно', 'substagemat':u'подстадия зрелости', 'bodyheight':u'высота панциря', 'gonadwght':u'вес гонад', 'bodyweight':u'вес тела', 'numstn':u'номер станции', 'shellwidth':u'ширина раковины', 'observcode':u'наблюдатель', 'stagemat':u'стадия зрелости', 'wkarapax':u'ширина карапакса', 'comment4':u'комментарий', 'age':u'возраст', 'numsurvey':u'номер рейса', 'comment1':u'комментарий', 'condamp':u'состояние ампул', 'lkarapax':u'длина карапакса', 'comment2':u'комментарий', 'illnesscode':u'заболевание', 'musclewght':u'вес мускула', 'spfform':u'форма сперматофоров', 'mating':u'следы спаривания'}
+catch_headers_dict = {'station_number':u'№ станции', 'species_code':u'вид', 'catch':u'улов', 'commercial_catch':u'комм. улов', 'sampleweigth':u'вес пробы', 'catch_pieces':u'пром. самцы, шт', 'noncommercial_catch':u'непром. самцы, шт', 'catch_females':u'самки, шт', 'comment1':u'комментарий',}
+
+bio_groups = [u'криль', u'креветки', u'головоногие', u'ежи', u'крабы', u'головоногие', u'водоросли', u'голотурии', u'брюхоногие', u'двустворчатые']
+
+bio_groups_dict = {'krill':u'криль', 'krevet':u'креветки', 'squid':u'головоногие', 'echinoidea':u'ежи', 'crab':u'крабы', 'squid':u'головоногие', 'algae':u'водоросли', 'golotur':u'голотурии', 'molusk':u'брюхоногие', 'pelecipoda':u'двустворчатые'}
+
+
+bio_headers = [u'высота раковины',
+u'общий вес',
+u'год',
+u'вес',
+u'длина раковины', 
+u'стадия зрелости яичника', 
+u'номер особи', 
+u'пол', 
+u'вес кожно-мускульного мешка', 
+u'комментарий', 
+u'вес гонады', 
+u'стадия развития гонады', 
+u'стадия петазмы', 
+u'состояние половых отверстий', 
+u'повреждения ног', 
+u'промысловая длина тела', 
+u'стадия теликума', 
+u'стернальные шипы', 
+u'метка', 
+u'цвет гонад', 
+u'линочная стадия', 
+u'номер страты',
+u'вид', 
+u'икра', 
+u'диаметр тела', 
+u'гонадный индекс', 
+u'наполнение желудка', 
+u'высота клешни', 
+u'состояние сперматофоров', 
+u'наличие шарика спермы', 
+u'стадия зрелости', 
+u'судно', 
+u'подстадия зрелости', 
+u'высота панциря', 
+u'вес гонад', 
+u'вес тела', 
+u'номер станции', 
+u'ширина раковины', 
+u'наблюдатель', 
+u'стадия зрелости', 
+u'ширина карапакса', 
+u'комментарий', 
+u'возраст', 
+u'номер рейса', 
+u'комментарий', 
+u'состояние ампул', 
+u'длина карапакса', 
+u'комментарий', 
+u'заболевание', 
+u'вес мускула', 
+u'форма сперматофоров', 
+u'следы спаривания']
+
+bio_headers_dict = {'shellheight':u'высота раковины', 'bodywght':u'общий вес', 'myear':u'год', 'weight':u'вес', 'shelllength':u'длина раковины', 'stageovary':u'стадия зрелости яичника', 'numspec':u'номер особи', 'sex':u'пол', 'kmmweight':u'вес кожно-мускульного мешка', 'comment3':u'комментарий', 'gonadweight':u'вес гонады', 'gonad':u'стадия развития гонады', 'stagepetasma':u'стадия петазмы', 'condgenapert':u'состояние половых отверстий', 'leglost':u'повреждения ног', 'mlength':u'промысловая длина тела', 'stagetelicum':u'стадия теликума', 'sternal':u'стернальные шипы', 'label':u'метка', 'gonadcolor':u'цвет гонад', 'moltingst':u'линочная стадия', 'numstrat':u'номер страты', 'speciescode':u'вид', 'eggs':u'икра', 'bodydiametr':u'диаметр тела', 'gonadindex':u'гонадный индекс', 'stomach':u'наполнение желудка', 'clawhight':u'высота клешни', 'condspf':u'состояние сперматофоров', 'spermball':u'наличие шарика спермы', 'maturstage':u'стадия зрелости', 'vesselcode':u'судно', 'substagemat':u'подстадия зрелости', 'bodyheight':u'высота панциря', 'gonadwght':u'вес гонад', 'bodyweight':u'вес тела', 'numstn':u'номер станции', 'shellwidth':u'ширина раковины', 'observcode':u'наблюдатель', 'stagemat':u'стадия зрелости', 'wkarapax':u'ширина карапакса', 'comment4':u'комментарий', 'age':u'возраст', 'numsurvey':u'номер рейса', 'comment1':u'комментарий', 'condamp':u'состояние ампул', 'lkarapax':u'длина карапакса', 'comment2':u'комментарий', 'illnesscode':u'заболевание', 'musclewght':u'вес мускула', 'spfform':u'форма сперматофоров', 'mating':u'следы спаривания'}
+
+
 
 column_names_query = """select column_name from information_schema.columns where table_name ilike '%%%s'"""
 
@@ -69,25 +132,43 @@ class MainView(QtGui.QMainWindow):
         
 
         #пока так...
-        self.ui.stationsTableView.setModel(TableModel([range(1,len(station_headers)), station_headers.keys(), station_headers.values()], station_headers.values(), self.undoStack, self.conn, self.statusBar, station_headers.keys(), self))
-        self.ui.catchTableView.setModel(TableModel([range(1,len(catch_headers)), catch_headers.values(), catch_headers.keys()], catch_headers.values(), self.undoStack, self.conn, self.statusBar, catch_headers.keys(), self))
-    
-    
-        self.ui.bioTableView.setModel(TableModel([range(1,len(bio_headers)), bio_headers.values(), bio_headers.keys()], bio_headers.values(), self.undoStack, self.conn, self.statusBar, bio_headers.keys(), self))
-        self.selectionModel = QtGui.QItemSelectionModel(self.ui.bioTableView.model())
-        self.ui.bioTableView.setSelectionModel(self.selectionModel)
+        #станции
+        self.ui.stationsTableView.setModel(TableModel([range(1,len(station_headers_dict)), station_headers_dict.keys(), station_headers], station_headers, self.undoStack, self.conn, self.statusBar, station_headers_dict.keys(), self))
+
+        #for i in station_headers_dict.values():
+        #    print i
+        self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
+        self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
+        
+
+        #уловы
+        self.ui.catchTableView.setModel(TableModel([range(1,len(catch_headers_dict)), catch_headers_dict.values(), catch_headers_dict.keys()], catch_headers_dict.values(), self.undoStack, self.conn, self.statusBar, catch_headers_dict.keys(), self))
+        self.catchselectionModel = QtGui.QItemSelectionModel(self.ui.catchTableView.model())
+        self.ui.catchTableView.setSelectionModel(self.catchselectionModel)
+        self.connect(self.catchselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
+
+
+        #биоанализы
+        self.ui.bioTableView.setModel(TableModel([range(1,len(bio_headers_dict)), bio_headers_dict.values(), bio_headers_dict.keys()], bio_headers_dict.values(), self.undoStack, self.conn, self.statusBar, bio_headers_dict.keys(), self))
+        self.bioselectionModel = QtGui.QItemSelectionModel(self.ui.bioTableView.model())
+        self.ui.bioTableView.setSelectionModel(self.bioselectionModel)
+        self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #Delegate работает
-        delegate = ColumnDelegate(self.ui.bioTableView.model())
+        delegate = ComboBoxDelegate(self.ui.bioTableView.model())
         self.ui.bioTableView.setItemDelegateForColumn(0,delegate)
+
+        #Тут насоздавать делегатов на всё. В делегат написать метод получения значений для ComboBox 
+        #или передавать эти значения при создании экземпляра класса
 
 
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
         #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
         #еще раз пишу - надо переделать модель!!! для всех!!!
         
-        
-        self.connect(self.selectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
+
+    #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
 
     def showColumns(self, table, columns):
         for i in columns:
@@ -100,13 +181,12 @@ class MainView(QtGui.QMainWindow):
 
     #Вот тут будем добавлять новую строчку после того, как будет достигнут конец строки
     def appendRow(self, current, prev):
-        maxrow = len(self.ui.bioTableView.model().dbdata)
-        maxcolumn = len(self.ui.bioTableView.model().dbdata[0])
-        #print maxrow
-        #print maxcolumn
-
+        model = current.model()
+        maxrow = len(model.dbdata)
+        maxcolumn = len(model.dbdata[0])
+        
         if current.row()+1 == maxrow and current.column()+1 == maxcolumn:
-            self.ui.bioTableView.model().insertRow(current.row()+1, current)
+            model.insertRow(current.row()+1, current)
             print 'row', current.row(), prev.row(), maxrow
             print 'column', current.column(), prev.column(), maxcolumn
             
@@ -207,7 +287,7 @@ class TableModel(QtCore.QAbstractTableModel):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
 
-class ColumnDelegate(QtGui.QItemDelegate):
+class ComboBoxDelegate(QtGui.QItemDelegate):
     def __init__(self, parent = None):
         QtGui.QItemDelegate.__init__(self, parent)
         self.parent = parent
@@ -237,25 +317,7 @@ class ColumnDelegate(QtGui.QItemDelegate):
         editor.setGeometry(option.rect)
 
 
-    #def paint(self, painter, option, index):
-    #    painter.save()
-    #
-        # set background color
-    #    painter.setPen(QtGui.QPen(QtGui.Qt.NoPen))
-    #    if option.state & QtGui.QStyle.State_Selected:
-    #        painter.setBrush(QtGui.QBrush(QtGui.Qt.red))
-    #    else:
-    #        painter.setBrush(QtGyu.QBrush(QtGui.Qt.white))
-    #    painter.drawRect(option.rect)
 
-        # set text color
-    #    painter.setPen(QtGui.QPen(QtGui.Qt.black))
-    #    value = index.data(QtGui.Qt.DisplayRole)
-    #    if value.isValid():
-    #        text = value.toString()
-    #        painter.drawText(option.rect, QtGui.Qt.AlignLeft, text)
-
-    #painter.restore()
 
 
 class EditCommand(QtGui.QUndoCommand):
