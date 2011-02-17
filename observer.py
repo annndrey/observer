@@ -290,14 +290,15 @@ class MainView(QtGui.QMainWindow):
         catchDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         self.ui.catchTableView.setItemDelegateForColumn(0, catchDelegate)
 
-        spindelegate = SpinBoxDelegate(self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(0, spindelegate)
-        self.ui.stationsTableView.setItemDelegateForColumn(1, spindelegate)
+        spindelegate0 = SpinBoxDelegate(self.ui.stationsTableView.model())
+        spindelegate1 = SpinBoxDelegate(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(0, spindelegate0)
+        self.ui.stationsTableView.setItemDelegateForColumn(1, spindelegate1)
 
         #delegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
         #self.ui.bioTableView.setItemDelegateForColumn(0, delegate)
 
-        self.connect(spindelegate, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
+        self.connect(spindelegate0, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
         #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
