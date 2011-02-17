@@ -10,6 +10,9 @@ from PyQt4 import QtCore, QtGui
 from main_window import Ui_MainWindow as MainWindow
 #Форма авторизации
 from authoriz import Ui_Dialog as AuthDialog
+#Настройка рейса
+from trip_setup import Ui_Dialog as TripDialog
+
 
 #Импорт необходимых библиотек
 import psycopg2, psycopg2.extras
@@ -25,19 +28,100 @@ passwd = 'andreygon'
 
 #надо добавить год, судно, номер рейса, наблюдатель в станции и уловы и сделать их нередактируемыми. 
 
-station_headers = [u'станция', u'№ в судовом журнале', u'дата постановки', u'время постановки', u'дата выборки', u'время выборки', u'глубина начала', u'глубина конца', u'грунт', u'координаты начала', u'координаты конца', u'глубина начала', u'глубина конца', u'орудие лова', u'вид наживки', u'ячея', u'расстояние между ловушками', u'число ловушек', u'обработано', u'атм. давление, МПа', u'Т возд.,°С', u'V ветра, м/с', u'направление ветра', u'волнение', u'Т воды.,°С']
+station_headers = [u'станция',
+u'№ в судовом журнале', 
+u'дата постановки', 
+u'время постановки', 
+u'дата выборки', 
+u'время выборки', 
+u'глубина начала', 
+u'глубина конца', 
+u'грунт', 
+u'координаты начала', 
+u'координаты конца', 
+u'глубина начала', 
+u'глубина конца', 
+u'орудие лова', 
+u'вид наживки', 
+u'ячея', 
+u'расстояние между ловушками', 
+u'число ловушек', 
+u'обработано', 
+u'атм. давление, МПа', 
+u'Т возд.,°С', 
+u'V ветра, м/с', 
+u'направление ветра', 
+u'волнение', 
+u'Т воды.,°С']
 
-station_headers_dict = {'station_number':u'станция', 'journ_station':u'№ в судовом журнале', 'begdate':u'дата постановки', 'begtime':u'время постановки', 'enddate':u'дата выборки', 'enttime':u'время выборки', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'bottomcode':u'грунт', 'beglatgrad beglatmin beglonggrad beglongmin':u'координаты начала', 'endlatgrad endlatmin endlonggrad endlongmin':u'координаты конца', 'begdepth':u'глубина начала', 'enddepth':u'глубина конца', 'gearcode':u'орудие лова', '???':u'вид наживки', '????':u'ячея', 'trapdist':u'расстояние между ловушками', 'nlov':u'число ловушек', '?????':u'обработано', 'pressure':u'атм. давление, МПа', 'surfacetemp':u'Т возд.,°С', 'windspeed':u'V ветра, м/с', 'winddirection':u'направление ветра', 'wave':u'волнение', 'temp':u'Т воды.,°С'}
+station_headers_dict = {'station_number':u'станция', 
+'journ_station':u'№ в судовом журнале', 
+'begdate':u'дата постановки', 
+'begtime':u'время постановки', 
+'enddate':u'дата выборки', 
+'enttime':u'время выборки', 
+'begdepth':u'глубина начала', 
+'enddepth':u'глубина конца', 
+'bottomcode':u'грунт', 
+'beglatgrad beglatmin beglonggrad beglongmin':u'координаты начала', 
+'endlatgrad endlatmin endlonggrad endlongmin':u'координаты конца', 
+'begdepth':u'глубина начала', 
+'enddepth':u'глубина конца', 
+'gearcode':u'орудие лова', 
+'???':u'вид наживки', 
+'????':u'ячея', 
+'trapdist':u'расстояние между ловушками', 
+'nlov':u'число ловушек', 
+'?????':u'обработано', 
+'pressure':u'атм. давление, МПа', 
+'surfacetemp':u'Т возд.,°С', 
+'windspeed':u'V ветра, м/с', 
+'winddirection':u'направление ветра', 
+'wave':u'волнение', 
+'temp':u'Т воды.,°С'}
 
 #вес пробы - в станции
 
-catch_headers = [u'№ станции', u'вид', u'улов', u'комм. улов', u'вес пробы', u'пром. самцы, шт', u'непром. самцы, шт', u'самки, шт', u'комментарий',]
+catch_headers = [u'№ станции', 
+u'вид', 
+u'улов', 
+u'комм. улов', 
+u'вес пробы', 
+u'пром. самцы, шт', 
+u'непром. самцы, шт', 
+u'самки, шт', 
+u'комментарий',]
 
-catch_headers_dict = {'station_number':u'№ станции', 'species_code':u'вид', 'catch':u'улов', 'commercial_catch':u'комм. улов', 'sampleweigth':u'вес пробы', 'catch_pieces':u'пром. самцы, шт', 'noncommercial_catch':u'непром. самцы, шт', 'catch_females':u'самки, шт', 'comment1':u'комментарий',}
+catch_headers_dict = {'station_number':u'№ станции', 
+'species_code':u'вид', 
+'catch':u'улов', 
+'commercial_catch':u'комм. улов', 
+'sampleweigth':u'вес пробы', 
+'catch_pieces':u'пром. самцы, шт', 
+'noncommercial_catch':u'непром. самцы, шт', 
+'catch_females':u'самки, шт', 
+'comment1':u'комментарий',}
 
-bio_groups = [u'криль', u'креветки', u'головоногие', u'ежи', u'крабы', u'головоногие', u'водоросли', u'голотурии', u'брюхоногие', u'двустворчатые']
+bio_groups = [u'криль', u'креветки', 
+u'головоногие', 
+u'ежи', 
+u'крабы', 
+u'головоногие', 
+u'водоросли', 
+u'голотурии', 
+u'брюхоногие', 
+u'двустворчатые']
 
-bio_groups_dict = {'krill':u'криль', 'krevet':u'креветки', 'squid':u'головоногие', 'echinoidea':u'ежи', 'crab':u'крабы', 'squid':u'головоногие', 'algae':u'водоросли', 'golotur':u'голотурии', 'molusk':u'брюхоногие', 'pelecipoda':u'двустворчатые'}
+bio_groups_dict = {'krill':u'криль', 
+'krevet':u'креветки', 
+'squid':u'головоногие', 
+'echinoidea':u'ежи', 
+'crab':u'крабы', 
+'squid':u'головоногие', 
+'algae':u'водоросли', 
+'golotur':u'голотурии', 
+'molusk':u'брюхоногие', 
+'pelecipoda':u'двустворчатые'}
 
 
 bio_headers = [u'высота раковины',
@@ -93,12 +177,66 @@ u'вес мускула',
 u'форма сперматофоров', 
 u'следы спаривания']
 
-bio_headers_dict = {'shellheight':u'высота раковины', 'bodywght':u'общий вес', 'myear':u'год', 'weight':u'вес', 'shelllength':u'длина раковины', 'stageovary':u'стадия зрелости яичника', 'numspec':u'номер особи', 'sex':u'пол', 'kmmweight':u'вес кожно-мускульного мешка', 'comment3':u'комментарий', 'gonadweight':u'вес гонады', 'gonad':u'стадия развития гонады', 'stagepetasma':u'стадия петазмы', 'condgenapert':u'состояние половых отверстий', 'leglost':u'повреждения ног', 'mlength':u'промысловая длина тела', 'stagetelicum':u'стадия теликума', 'sternal':u'стернальные шипы', 'label':u'метка', 'gonadcolor':u'цвет гонад', 'moltingst':u'линочная стадия', 'numstrat':u'номер страты', 'speciescode':u'вид', 'eggs':u'икра', 'bodydiametr':u'диаметр тела', 'gonadindex':u'гонадный индекс', 'stomach':u'наполнение желудка', 'clawhight':u'высота клешни', 'condspf':u'состояние сперматофоров', 'spermball':u'наличие шарика спермы', 'maturstage':u'стадия зрелости', 'vesselcode':u'судно', 'substagemat':u'подстадия зрелости', 'bodyheight':u'высота панциря', 'gonadwght':u'вес гонад', 'bodyweight':u'вес тела', 'numstn':u'номер станции', 'shellwidth':u'ширина раковины', 'observcode':u'наблюдатель', 'stagemat':u'стадия зрелости', 'wkarapax':u'ширина карапакса', 'comment4':u'комментарий', 'age':u'возраст', 'numsurvey':u'номер рейса', 'comment1':u'комментарий', 'condamp':u'состояние ампул', 'lkarapax':u'длина карапакса', 'comment2':u'комментарий', 'illnesscode':u'заболевание', 'musclewght':u'вес мускула', 'spfform':u'форма сперматофоров', 'mating':u'следы спаривания'}
-
-
+bio_headers_dict = {'shellheight':u'высота раковины', 
+'bodywght':u'общий вес', 
+'myear':u'год', 
+'weight':u'вес', 
+'shelllength':u'длина раковины', 
+'stageovary':u'стадия зрелости яичника', 
+'numspec':u'номер особи', 
+'sex':u'пол', 
+'kmmweight':u'вес кожно-мускульного мешка', 
+'comment3':u'комментарий', 
+'gonadweight':u'вес гонады', 
+'gonad':u'стадия развития гонады', 
+'stagepetasma':u'стадия петазмы', 
+'condgenapert':u'состояние половых отверстий', 
+'leglost':u'повреждения ног', 
+'mlength':u'промысловая длина тела', 
+'stagetelicum':u'стадия теликума', 
+'sternal':u'стернальные шипы', 
+'label':u'метка', 
+'gonadcolor':u'цвет гонад', 
+'moltingst':u'линочная стадия', 
+'numstrat':u'номер страты', 
+'speciescode':u'вид', 
+'eggs':u'икра', 
+'bodydiametr':u'диаметр тела', 
+'gonadindex':u'гонадный индекс', 
+'stomach':u'наполнение желудка', 
+'clawhight':u'высота клешни', 
+'condspf':u'состояние сперматофоров', 
+'spermball':u'наличие шарика спермы', 
+'maturstage':u'стадия зрелости', 
+'vesselcode':u'судно', 
+'substagemat':u'подстадия зрелости', 
+'bodyheight':u'высота панциря', 
+'gonadwght':u'вес гонад', 
+'bodyweight':u'вес тела', 
+'numstn':u'номер станции', 
+'shellwidth':u'ширина раковины', 
+'observcode':u'наблюдатель', 
+'stagemat':u'стадия зрелости', 
+'wkarapax':u'ширина карапакса', 
+'comment4':u'комментарий', 
+'age':u'возраст', 
+'numsurvey':u'номер рейса', 
+'comment1':u'комментарий', 
+'condamp':u'состояние ампул', 
+'lkarapax':u'длина карапакса', 
+'comment2':u'комментарий', 
+'illnesscode':u'заболевание', 
+'musclewght':u'вес мускула', 
+'spfform':u'форма сперматофоров', 
+'mating':u'следы спаривания'}
 
 column_names_query = """select column_name from information_schema.columns where table_name ilike '%%%s'"""
 
+class TripForm(QtGui.QDialog):
+    def __init__(self, parent = None):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = TripDialog()
+        self.ui.setupUi(self)
 
 class AuthForm(QtGui.QDialog):
     def __init__(self, parent = None):
@@ -121,26 +259,19 @@ class MainView(QtGui.QMainWindow):
         self.ui.setupUi(self)
         self.undoStack = QtGui.QUndoStack(self)
 
+        self.tripForm = TripForm(self)
+
         self.conn = psycopg2.connect("dbname='%s' user='%s' host='%s' port=%d  password='%s'" % (dbname, user, host, port, passwd))
         self.cur = self.conn.cursor()
-
-        
+       
         self.cur.execute(column_names_query % 'catch')
-        
-        for i in self.cur.fetchall():
-            print i[0]
-        
 
-        #пока так...
         #станции
-        self.ui.stationsTableView.setModel(TableModel([range(1,len(station_headers_dict)), station_headers_dict.keys(), station_headers], station_headers, self.undoStack, self.conn, self.statusBar, station_headers_dict.keys(), self))
 
-        #for i in station_headers_dict.values():
-        #    print i
+        self.ui.stationsTableView.setModel(TableModel([range(1,len(station_headers_dict)), station_headers_dict.keys(), station_headers_dict.values()], station_headers, self.undoStack, self.conn, self.statusBar, station_headers, self))
         self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
         self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
-        
 
         #уловы
         self.ui.catchTableView.setModel(TableModel([range(1,len(catch_headers_dict)), catch_headers_dict.values(), catch_headers_dict.keys()], catch_headers_dict.values(), self.undoStack, self.conn, self.statusBar, catch_headers_dict.keys(), self))
@@ -148,25 +279,33 @@ class MainView(QtGui.QMainWindow):
         self.ui.catchTableView.setSelectionModel(self.catchselectionModel)
         self.connect(self.catchselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
-
         #биоанализы
         self.ui.bioTableView.setModel(TableModel([range(1,len(bio_headers_dict)), bio_headers_dict.values(), bio_headers_dict.keys()], bio_headers_dict.values(), self.undoStack, self.conn, self.statusBar, bio_headers_dict.keys(), self))
         self.bioselectionModel = QtGui.QItemSelectionModel(self.ui.bioTableView.model())
         self.ui.bioTableView.setSelectionModel(self.bioselectionModel)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
-        #Delegate работает
-        delegate = ComboBoxDelegate(self.ui.bioTableView.model())
-        self.ui.bioTableView.setItemDelegateForColumn(0,delegate)
+        #Delegates
 
-        #Тут насоздавать делегатов на всё. В делегат написать метод получения значений для ComboBox 
-        #или передавать эти значения при создании экземпляра класса
+        catchDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(0, catchDelegate)
 
+        spindelegate = SpinBoxDelegate(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(0, spindelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(1, spindelegate)
 
+        #delegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+        #self.ui.bioTableView.setItemDelegateForColumn(0, delegate)
+
+        self.connect(spindelegate, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
+        
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
         #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
         #еще раз пишу - надо переделать модель!!! для всех!!!
         
+
+        self.connect(self.ui.setupaction, QtCore.SIGNAL('triggered()'), self.tripForm.show)
+
 
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
 
@@ -187,8 +326,8 @@ class MainView(QtGui.QMainWindow):
         
         if current.row()+1 == maxrow and current.column()+1 == maxcolumn:
             model.insertRow(current.row()+1, current)
-            print 'row', current.row(), prev.row(), maxrow
-            print 'column', current.column(), prev.column(), maxcolumn
+            #print 'row', current.row(), prev.row(), maxrow
+            #print 'column', current.column(), prev.column(), maxcolumn
             
     
 
@@ -287,37 +426,75 @@ class TableModel(QtCore.QAbstractTableModel):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
 
+class SpinBoxDelegate(QtGui.QItemDelegate):
+    #Приятная особенность - этот делегат будет проверять,
+    #чтобы каждая следующая станция не имела бы номера,
+    #равного предыдущему
+
+    def __init__(self, parent = None):
+        QtGui.QItemDelegate.__init__(self, parent)
+        self.prev_values = []
+
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QSpinBox(parent)
+        editor.setMinimum(1)
+        editor.setMaximum(1000000)
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, QtCore.Qt.EditRole).toInt()[0]
+        for i in index.model().dbdata:
+            try:
+                val = i[index.column()].toInt()[0]
+                self.prev_values.append(val)
+            except:
+                pass
+                        
+        if value not in self.prev_values:
+            editor.setValue(value)
+
+    def setModelData(self, editor, model, index):
+        value = editor.value()
+        if value not in self.prev_values:
+            model.setData(index, value, QtCore.Qt.EditRole)
+            self.emit(QtCore.SIGNAL("dataAdded"), value)
+
 class ComboBoxDelegate(QtGui.QItemDelegate):
     def __init__(self, parent = None):
         QtGui.QItemDelegate.__init__(self, parent)
-        self.parent = parent
+        #self.comboBox = QtGui.QComboBox()
+        
+        #if isinstance(item_list, list):
+        #    print data_list
 
-        #переопределить paint() и рисовать 2
-        #разные картинки в качестве фона
-        #в зависимости от того, есть ли публикация или нет.
+        self.values = []
 
-        #переопределить setEditorData, setModelData и updateEditorGeometry
-        #для изменения поведения.
-
+        
     def createEditor(self, parent, option, index):
-        return QtGui.QComboBox(parent)
+        comboBox = QtGui.QComboBox(parent)
+        return comboBox
+
+    def addValue(self, value):
+        self.values.append(value)
 
     def setEditorData(self, comboBox, index):
         value = index.model().data(index, QtCore.Qt.EditRole)#.toInt()[0]
-        comboBox.addItem(value.toString())
-        comboBox.setItemText(index.row(), unicode(value.toString()))
+        #self.values.insert(0, unicode(value.toString()))
+        #comboBox.addItem(value.toString())
+        for i in self.values:
+            comboBox.addItem(QtCore.QString(str(i)))
+        #comboBox.setItemText(0, unicode(value.toString()))
+        
 
     def setModelData(self, comboBox, model, index):
-        #spinBox.interpretText()
         value = comboBox.currentText()
-
         model.setData(index, value, QtCore.Qt.EditRole)
-
+        
+    #def updateEditorData(self, comboBox, value):
+    #    comboBox.addItem(QtCore.QString(value))
+        
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
-
-
-
 
 
 class EditCommand(QtGui.QUndoCommand):
