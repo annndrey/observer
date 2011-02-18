@@ -300,8 +300,8 @@ class MainView(QtGui.QMainWindow):
         latvalidator = QtGui.QRegExpValidator(latRegexp, self)
         latdelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = latvalidator)
         self.ui.stationsTableView.setItemDelegateForColumn(9, latdelegate)
-        self.connect(spindelegate, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         self.connect(spindelegate0, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
+        #self.connect(spindelegate1, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         
         dateDelegate = DateDelegate(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(2, dateDelegate)
