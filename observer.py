@@ -13,11 +13,9 @@ from authoriz import Ui_Dialog as AuthDialog
 #Настройка рейса
 from trip_setup import Ui_Dialog as TripDialog
 
-
 #Импорт необходимых библиотек
 import psycopg2, psycopg2.extras
 from psycopg2.extensions import adapt
-
 
 #Настройки БД по умолчанию. Потом брать из файла настроек.
 dbname = "OBSERVERDB"
@@ -122,7 +120,6 @@ bio_groups_dict = {'krill':u'криль',
 'golotur':u'голотурии', 
 'molusk':u'брюхоногие', 
 'pelecipoda':u'двустворчатые'}
-
 
 bio_headers = [u'высота раковины',
 u'общий вес',
@@ -248,7 +245,6 @@ class AuthForm(QtGui.QDialog):
         self.ui.lineEdit_2.setText(str(port))
         self.ui.lineEdit_3.setText(user)
         self.ui.lineEdit_4.setText(passwd)
-      
 
 class MainView(QtGui.QMainWindow):
     
@@ -297,13 +293,22 @@ class MainView(QtGui.QMainWindow):
         #delegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
         #self.ui.bioTableView.setItemDelegateForColumn(0, delegate)
 
+        #координаты - широта и долгота. Широта - 0-90, долгота - 0-180. 
+        latRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
+        lonRegexp = QtCore.QRegExp(r'[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
+        latvalidator = QtGui.QRegExpValidator(latRegexp, self)
+        latdelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = latvalidator)
+        self.ui.stationsTableView.setItemDelegateForColumn(9, latdelegate)
         self.connect(spindelegate, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         
+        dateDelegate = DateDelegate(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(2, dateDelegate)
+
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
         #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
         #еще раз пишу - надо переделать модель!!! для всех!!!
         
-
+        #Показ формы настроек рейса и пр.
         self.connect(self.ui.setupaction, QtCore.SIGNAL('triggered()'), self.tripForm.show)
 
 
@@ -328,7 +333,8 @@ class MainView(QtGui.QMainWindow):
             model.insertRow(current.row()+1, current)
             #print 'row', current.row(), prev.row(), maxrow
             #print 'column', current.column(), prev.column(), maxcolumn
-            
+        #else:
+        #    print current.parent()
     
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -425,6 +431,32 @@ class TableModel(QtCore.QAbstractTableModel):
 
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
+class LineEditDelegate(QtGui.QItemDelegate):
+    #Этот делегат будет уметь фильтровать ввод
+    #валидатор с параметрами будет передаваться
+    #при создании экземпляра класса
+
+    def __init__(self, parent = None, validator = None):
+        QtGui.QItemDelegate.__init__(self, parent)
+        self.validator = validator
+
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QLineEdit(parent)
+        validator = self.validator
+        editor.setValidator(validator)
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, QtCore.Qt.EditRole).toString()
+        editor.setText(value)
+    
+    def setModelData(self, editor, model, index):
+        value = editor.text()
+        model.setData(index, value, QtCore.Qt.EditRole)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
 
 class SpinBoxDelegate(QtGui.QItemDelegate):
     #Приятная особенность - этот делегат будет проверять,
@@ -459,19 +491,41 @@ class SpinBoxDelegate(QtGui.QItemDelegate):
             model.setData(index, value, QtCore.Qt.EditRole)
             self.emit(QtCore.SIGNAL("dataAdded"), value)
 
-class ComboBoxDelegate(QtGui.QItemDelegate):
+class DateDelegate(QtGui.QItemDelegate):
     def __init__(self, parent = None):
         QtGui.QItemDelegate.__init__(self, parent)
-        #self.comboBox = QtGui.QComboBox()
-        
-        #if isinstance(item_list, list):
-        #    print data_list
-
-        self.values = []
-
         
     def createEditor(self, parent, option, index):
+        editor = QtGui.QDateEdit(parent)
+        return editor
+    
+    def setEditorData(self, editor, index):
+        #Сделать проверку входных значений.
+        #если не подходит, то выставлять текущую
+        value = index.model().data(index, QtCore.Qt.EditRole).toString()[0]
+        try:
+            editor.setDate(value)
+        except:
+            editor.setDate(QtCore.QDate.currentDate())
+
+    def setModelData(self, editor, model, index):
+        value = editor.date()
+        model.setData(index, u"%02d.%02d.%s" %(value.day(), value.month(), value.year()), QtCore.Qt.EditRole)
+        
+
+
+
+class ComboBoxDelegate(QtGui.QItemDelegate):
+    def __init__(self, parent = None, validator = None):
+        QtGui.QItemDelegate.__init__(self, parent)
+        
+        self.validator = validator
+        self.values = []
+        
+    def createEditor(self, parent, option, index):
+        validator = self.validator
         comboBox = QtGui.QComboBox(parent)
+        comboBox.setValidator(validator)
         return comboBox
 
     def addValue(self, value):
