@@ -294,7 +294,6 @@ class MainView(QtGui.QMainWindow):
         #delegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
         #self.ui.bioTableView.setItemDelegateForColumn(0, delegate)
 
-<<<<<<< HEAD:observer.py
         #координаты - широта и долгота. Широта - 0-90, долгота - 0-180. 
         latRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
         lonRegexp = QtCore.QRegExp(r'[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
@@ -302,9 +301,7 @@ class MainView(QtGui.QMainWindow):
         latdelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = latvalidator)
         self.ui.stationsTableView.setItemDelegateForColumn(9, latdelegate)
         self.connect(spindelegate, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
-=======
         self.connect(spindelegate0, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
->>>>>>> 3e5d8941938f4df30fc67f325db824745b288973:observer.py
         
         dateDelegate = DateDelegate(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(2, dateDelegate)
