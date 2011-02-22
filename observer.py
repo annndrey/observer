@@ -18,7 +18,7 @@ import psycopg2, psycopg2.extras
 from psycopg2.extensions import adapt
 
 #Настройки БД по умолчанию. Потом брать из файла настроек.
-dbname = "OBSERVERDB"
+dbname = "observer"
 user = 'annndrey'
 host = 'localhost'
 port = 5432
@@ -37,15 +37,13 @@ u'глубина конца',
 u'грунт', 
 u'координаты начала', 
 u'координаты конца', 
-u'глубина начала', 
-u'глубина конца', 
 u'орудие лова', 
 u'вид наживки', 
 u'ячея', 
 u'расстояние между ловушками', 
 u'число ловушек', 
 u'обработано', 
-u'атм. давление, МПа', 
+u'атм. давление, гПа', 
 u'Т возд.,°С', 
 u'V ветра, м/с', 
 u'направление ветра', 
@@ -71,7 +69,7 @@ station_headers_dict = {'station_number':u'станция',
 'trapdist':u'расстояние между ловушками', 
 'nlov':u'число ловушек', 
 '?????':u'обработано', 
-'pressure':u'атм. давление, МПа', 
+'pressure':u'атм. давление, гПа', 
 'surfacetemp':u'Т возд.,°С', 
 'windspeed':u'V ветра, м/с', 
 'winddirection':u'направление ветра', 
@@ -263,14 +261,28 @@ class MainView(QtGui.QMainWindow):
         self.cur.execute(column_names_query % 'catch')
 
         #станции
-
-        self.ui.stationsTableView.setModel(TableModel([range(1,len(station_headers_dict)), station_headers_dict.keys(), station_headers_dict.values()], station_headers, self.undoStack, self.conn, self.statusBar, station_headers, self))
+        #Из TripForm надо брать year, survey_type, survey_number, vessel_code.
+        #потом select from stations where year, survey_type, survey_number, vessel_code
+        #                  catch
+        #                  bio
+        
+        #Исходная пустая строка для станций
+        init_list = []
+        for i in xrange(len(station_headers)):
+            init_list.append('')
+        
+        self.ui.stationsTableView.setModel(TableModel([init_list,], station_headers, self.undoStack, self.conn, self.statusBar, station_headers, self))
         self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
+        self.ui.stationsTableView.resizeColumnsToContents()
         self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #уловы
-        self.ui.catchTableView.setModel(TableModel([range(1,len(catch_headers_dict)), catch_headers_dict.values(), catch_headers_dict.keys()], catch_headers_dict.values(), self.undoStack, self.conn, self.statusBar, catch_headers_dict.keys(), self))
+        #Исходная пустая строка для уловов
+        init_list = []
+        for i in xrange(len(catch_headers)):
+            init_list.append('')
+        self.ui.catchTableView.setModel(TableModel([init_list, ], catch_headers_dict.values(), self.undoStack, self.conn, self.statusBar, catch_headers_dict.keys(), self))
         self.catchselectionModel = QtGui.QItemSelectionModel(self.ui.catchTableView.model())
         self.ui.catchTableView.setSelectionModel(self.catchselectionModel)
         self.connect(self.catchselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
@@ -282,10 +294,12 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #Delegates
-
+        
+        #уловы
         catchDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         self.ui.catchTableView.setItemDelegateForColumn(0, catchDelegate)
 
+        #станции
         spindelegate0 = SpinBoxDelegate(self.ui.stationsTableView.model())
         spindelegate1 = SpinBoxDelegate(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(0, spindelegate0)
@@ -297,15 +311,70 @@ class MainView(QtGui.QMainWindow):
         #координаты - широта и долгота. Широта - 0-90, долгота - 0-180. 
         latRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
         lonRegexp = QtCore.QRegExp(r'[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
-        latvalidator = QtGui.QRegExpValidator(latRegexp, self)
-        latdelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = latvalidator)
-        self.ui.stationsTableView.setItemDelegateForColumn(9, latdelegate)
+        coordRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[NS]{1};[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[EW]{1}')
+        coordvalidator = QtGui.QRegExpValidator(coordRegexp, self)
+        coordBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)
+        coordEndDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)
+        self.ui.stationsTableView.setItemDelegateForColumn(9, coordBegDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(10, coordEndDelegate)
+
+        
+
         self.connect(spindelegate0, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         #self.connect(spindelegate1, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         
-        dateDelegate = DateDelegate(self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(2, dateDelegate)
+        #дата начала
+        dateBegDelegate = DateDelegate(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(2, dateBegDelegate)
+        #время начала
+        timeBegDelegate = TimeDelegate(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(3, timeBegDelegate)
+        #дата окончания
+        dateEndDelegate = DateDelegate(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(4, dateEndDelegate)
+        #время окончания
+        timeEndDelegate = TimeDelegate(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(5, timeEndDelegate)
+        #глубина начала
+        depthBegDelegate = IntDelegate([0, 11022], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(6, depthBegDelegate)
+        #глубина конца
+        depthEndDelegate = IntDelegate([0, 11022], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(7, depthEndDelegate)
+        #грунт
+        self.cur.execute("select name from grunt_spr where char_length(name) > 0 order by bottomcode desc;")
+        bottomDelegate = ComboBoxDelegate(self.ui.stationsTableView.model())
+        for i in xrange(self.cur.rowcount):
+            bottomDelegate.addValue(unicode(self.cur.fetchone()[0].decode('utf-8')))
+        self.ui.stationsTableView.setItemDelegateForColumn(8, bottomDelegate)
+        #орудие лова
+        #переделать. чтобы было select name from gear_spr where mtype = [int]
+        #mtype брать из настроек рейса - тип съемки. 
+        #то же самое для списка видов.
+        #и в зависимости от типа съемки и вида показывать или прятать те или иные ячейки
+        self.cur.execute("select name from gear_spr order by gearcode asc;")
+        gearDelegate = ComboBoxDelegate(self.ui.stationsTableView.model())
+        for i in xrange(self.cur.rowcount):
+            gearDelegate.addValue(unicode(self.cur.fetchone()[0].decode('utf-8')))
+        self.ui.stationsTableView.setItemDelegateForColumn(11, gearDelegate)
+        
+        #ячея
+        cellDelegate = IntDelegate([1, 1000, 1], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(13, cellDelegate)
+        #расстояние между ловушками
+        trapdistDelegate = IntDelegate([1, 1000, 1], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(14, trapdistDelegate)
+        #количество ловушек
+        trapnumDelegate = IntDelegate([1, 10000, 1], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(15, trapnumDelegate)
+        #кол-во обработанных ловушек
+        trapprocessedDelegate = IntDelegate([0, 10000, 1], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(16, trapprocessedDelegate)
+        #давление воздуха min и max - отсюда [http://meteoclub.ru/index.php?action=vthread&topic=922]
+        pressDelegate = IntDelegate([880, 1134, 1013], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(17, pressDelegate)
 
+        
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
         #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
         #еще раз пишу - надо переделать модель!!! для всех!!!
@@ -433,6 +502,31 @@ class TableModel(QtCore.QAbstractTableModel):
 
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
+class IntDelegate(QtGui.QItemDelegate):
+    def __init__(self, val_range, parent = None):
+        QtGui.QItemDelegate.__init__(self, parent)
+        self.minmax = val_range
+
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QSpinBox(parent)
+        #if len(self.minmax) > 2:
+        #    editor.setValue(self.minmax[2])
+        
+        editor.setMinimum(self.minmax[0])
+        editor.setMaximum(self.minmax[1])
+        return editor
+    
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, QtCore.Qt.EditRole).toInt()[0]
+        if value == 0:
+            editor.setValue(self.minmax[2])
+        else:
+            editor.setValue(value)
+        
+    def setModelData(self, editor, model, index):
+        value = editor.value()
+        model.setData(index, value, QtCore.Qt.EditRole)
+
 class LineEditDelegate(QtGui.QItemDelegate):
     #Этот делегат будет уметь фильтровать ввод
     #валидатор с параметрами будет передаваться
@@ -504,7 +598,10 @@ class DateDelegate(QtGui.QItemDelegate):
     def setEditorData(self, editor, index):
         #Сделать проверку входных значений.
         #если не подходит, то выставлять текущую
-        value = index.model().data(index, QtCore.Qt.EditRole).toString()[0]
+        try:
+            value = index.model().data(index, QtCore.Qt.EditRole).toString()[0]
+        except IndexError:
+            value = QtCore.QDate.currentDate()
         try:
             editor.setDate(value)
         except:
@@ -512,10 +609,29 @@ class DateDelegate(QtGui.QItemDelegate):
 
     def setModelData(self, editor, model, index):
         value = editor.date()
-        model.setData(index, u"%02d.%02d.%s" %(value.day(), value.month(), value.year()), QtCore.Qt.EditRole)
+        model.setData(index, u"%02d.%02d.%s" % (value.day(), value.month(), value.year()), QtCore.Qt.EditRole)
         
+class TimeDelegate(QtGui.QItemDelegate):
+    def __init__(self, parent = None):
+        QtGui.QItemDelegate.__init__(self, parent)
 
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QTimeEdit(parent)
+        return editor
 
+    def setEditorData(self, editor, index):
+        try:
+            value = index.model().data(index, QtCore.Qt.EditRole).toString()[0]
+        except IndexError:
+            value = QtCore.QTime.currentTime()
+        try:
+            editor.setTime(value)
+        except:
+            editor.setTime(QtCore.QTime.currentTime())
+            
+    def setModelData(self, editor, model, index):
+        value = editor.time()
+        model.setData(index, u'%02d:%02d' % (value.hour(), value.minute()), QtCore.Qt.EditRole)
 
 class ComboBoxDelegate(QtGui.QItemDelegate):
     def __init__(self, parent = None, validator = None):
@@ -538,7 +654,7 @@ class ComboBoxDelegate(QtGui.QItemDelegate):
         #self.values.insert(0, unicode(value.toString()))
         #comboBox.addItem(value.toString())
         for i in self.values:
-            comboBox.addItem(QtCore.QString(str(i)))
+            comboBox.addItem(QtCore.QString(unicode(i)))
         #comboBox.setItemText(0, unicode(value.toString()))
         
 
