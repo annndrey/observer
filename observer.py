@@ -18,13 +18,39 @@ import psycopg2, psycopg2.extras
 from psycopg2.extensions import adapt
 
 #Настройки БД по умолчанию. Потом брать из файла настроек.
-dbname = "observer"
+dbname = "OBSERVERDB"
 user = 'annndrey'
-host = 'localhost'
+host = 'aldebaran'
 port = 5432
 passwd = 'andreygon'
 
 #надо добавить год, судно, номер рейса, наблюдатель в станции и уловы и сделать их нередактируемыми. 
+
+gear_hide_columns = {
+'tral':[],
+'lov':[],
+'diver':[],
+}
+
+
+#получение списка колонок для каждой группы видов
+#species_columns = select column_name from information_schema.columns where table_name like '%[bio_group]';
+
+objects_dict = {'asteroidea':u'морские звезды',
+None:'',
+'echinoidea':u'морские ежи',
+#'crinoidea':u'морские лилии',
+'crab':u'крабы',
+'squid':u'головоногие моллюски',
+#'algae':u'водоросли',
+'krill':u'криль',
+#'golotur':u'голотурии',
+#'pisces':u'рыбы',
+'molusk':u'брюхоногие моллюски',
+'krevet':u'креветки',
+'pelecipoda':u'двустворчатые моллюски',
+'craboid':u'крабоиды',
+}
 
 station_headers = [u'станция',
 u'№ в судовом журнале', 
@@ -75,6 +101,77 @@ station_headers_dict = {'station_number':u'станция',
 'winddirection':u'направление ветра', 
 'wave':u'волнение', 
 'temp':u'Т воды.,°С'}
+
+#это все столбцы станций
+#myear
+#vesselcode
+#numsurvey
+#numstn
+#typesurvey
+#numjurnalstn
+#nlov
+#gearcode
+#vtral
+#datebegin
+#timebegin
+#latgradbeg
+#latminbeg
+#longradbeg
+#lonminbeg
+#depthbeg
+#dateend
+#timeend
+#latgradend
+#latminend
+#longradend
+#lonminend
+#depthend
+#depthtral
+#wirelength
+#nlovobr
+#bottomcode
+#press
+#t
+#vwind
+#rwind
+#wave
+#tsurface
+#tbottom
+#samplewght
+#observnum
+#cell
+#trapdist
+#formcatch
+#lcatch
+#wcatch
+#hcatch
+#nentr
+#kurs
+#observcode
+#ngrupspec
+#flagsgrup
+
+#это уловы
+#myear
+#vesselcode
+#numsurvey
+#numstn
+#grup
+#speciescode
+#measure
+#catch
+#commcatch
+#samplewght
+#observcode
+#comment1
+#comment2
+#comment3
+#catchpromm
+#catchnonpromm
+#catchf
+#weightm
+#weightf
+#weightj
 
 #вес пробы - в станции
 
@@ -253,12 +350,19 @@ class MainView(QtGui.QMainWindow):
         self.ui.setupUi(self)
         self.undoStack = QtGui.QUndoStack(self)
 
-        self.tripForm = TripForm(self)
-
         self.conn = psycopg2.connect("dbname='%s' user='%s' host='%s' port=%d  password='%s'" % (dbname, user, host, port, passwd))
         self.cur = self.conn.cursor()
        
-        self.cur.execute(column_names_query % 'catch')
+        #форма настроек рейса
+        self.tripForm = TripForm(self)
+        #добавление групп организмов в форму настроек рейса
+        self.cur.execute('select distinct grup from species_spr order by grup asc;')
+        for i in xrange(self.cur.rowcount):
+            #добавление групп в форму
+            try:
+                self.tripForm.ui.objectComboBox.addItem(QtCore.QString(objects_dict[self.cur.fetchone()[0]]))
+            except KeyError:
+                pass
 
         #станции
         #Из TripForm надо брать year, survey_type, survey_number, vessel_code.
@@ -282,7 +386,7 @@ class MainView(QtGui.QMainWindow):
         init_list = []
         for i in xrange(len(catch_headers)):
             init_list.append('')
-        self.ui.catchTableView.setModel(TableModel([init_list, ], catch_headers_dict.values(), self.undoStack, self.conn, self.statusBar, catch_headers_dict.keys(), self))
+        self.ui.catchTableView.setModel(TableModel([init_list, ], catch_headers, self.undoStack, self.conn, self.statusBar, catch_headers, self))
         self.catchselectionModel = QtGui.QItemSelectionModel(self.ui.catchTableView.model())
         self.ui.catchTableView.setSelectionModel(self.catchselectionModel)
         self.connect(self.catchselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
@@ -294,10 +398,7 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #Delegates
-        
-        #уловы
-        catchDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
-        self.ui.catchTableView.setItemDelegateForColumn(0, catchDelegate)
+        #Делегаты для станций
 
         #станции
         spindelegate0 = SpinBoxDelegate(self.ui.stationsTableView.model())
@@ -317,11 +418,6 @@ class MainView(QtGui.QMainWindow):
         coordEndDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)
         self.ui.stationsTableView.setItemDelegateForColumn(9, coordBegDelegate)
         self.ui.stationsTableView.setItemDelegateForColumn(10, coordEndDelegate)
-
-        
-
-        self.connect(spindelegate0, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
-        #self.connect(spindelegate1, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         
         #дата начала
         dateBegDelegate = DateDelegate(self.ui.stationsTableView.model())
@@ -336,10 +432,10 @@ class MainView(QtGui.QMainWindow):
         timeEndDelegate = TimeDelegate(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(5, timeEndDelegate)
         #глубина начала
-        depthBegDelegate = IntDelegate([0, 11022], self.ui.stationsTableView.model())
+        depthBegDelegate = IntDelegate([0, 11022, 0], self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(6, depthBegDelegate)
         #глубина конца
-        depthEndDelegate = IntDelegate([0, 11022], self.ui.stationsTableView.model())
+        depthEndDelegate = IntDelegate([0, 11022, 0], self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(7, depthEndDelegate)
         #грунт
         self.cur.execute("select name from grunt_spr where char_length(name) > 0 order by bottomcode desc;")
@@ -373,17 +469,53 @@ class MainView(QtGui.QMainWindow):
         #давление воздуха min и max - отсюда [http://meteoclub.ru/index.php?action=vthread&topic=922]
         pressDelegate = IntDelegate([880, 1134, 1013], self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(17, pressDelegate)
+        #температура воздуха
+        temperDelegate = IntDelegate([-89, 60, 22], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(18, temperDelegate)
+        #скорость ветра
+        windSpeedDelegate = IntDelegate([0, 50, 3], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(19, windSpeedDelegate)
+        #направление ветра, румбы. Румб - 1/32 окружности
+        windDirectDelegate = IntDelegate([1, 32, 17], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(20, windDirectDelegate)
+        #волнение моря, баллы 0-9
+        seaSurfDelegate = IntDelegate([0, 9, 1], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(21, seaSurfDelegate)
+        #температура воды
+        seaTempDelegate = IntDelegate([-4, 45, 10], self.ui.stationsTableView.model())  
+        self.ui.stationsTableView.setItemDelegateForColumn(22, seaTempDelegate)
 
+        #Делегаты для уловов
+        #станция
+        catchDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(0, catchDelegate)
+        #вид
+        speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
+        self.addDelegate()
         
+
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
         #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
         #еще раз пишу - надо переделать модель!!! для всех!!!
+
+
+        #self.connect(self.ui.tripForm.buttonBox, accepted, change_view)
+        #change_view -> change stations, change_catch, change_bio
+        #
+        #self.connect(self.ui.tripForm.surveycomboBox, hide_station_columns)
+        #self.connect(self.ui.tripForm.objectComboBox, hide_bio_columns)
+        #
         
         #Показ формы настроек рейса и пр.
         self.connect(self.ui.setupaction, QtCore.SIGNAL('triggered()'), self.tripForm.show)
-
-
+        self.connect(spindelegate0, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
+        self.connect(self.tripForm.ui.buttonBox, QtCore.SIGNAL('accepted()'), self.addDelegate)
+        #self.connect(spindelegate1, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
+        
+        
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
+    def test(self):
+        print 'OK'
 
     def showColumns(self, table, columns):
         for i in columns:
@@ -393,6 +525,22 @@ class MainView(QtGui.QMainWindow):
         for i in columns:
             table.hideColumn(i)
 
+
+    def addDelegate(self):
+        speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
+        sp_obj = unicode(self.tripForm.ui.objectComboBox.currentText())
+        sp_obj = objects_dict.keys()[objects_dict.values().index(sp_obj)]
+        self.cur.execute("""select distinct namerus, namelat from species_spr where grup = '%s' order by namerus asc""" % sp_obj)
+        for i in xrange(self.cur.rowcount):
+            
+            try:
+                #print unicode(self.cur.fetchone()[0].decode('utf-8'))
+                species = self.cur.fetchone()
+                speciesDelegate.addValue(u'%s (%s)' % (species[0].decode('utf-8'), species[1].decode('utf-8')))
+            except TypeError:
+                pass
+            #speciesDelegate.addValue(u'')
+        self.ui.catchTableView.setItemDelegateForColumn(1, speciesDelegate)
 
     #Вот тут будем добавлять новую строчку после того, как будет достигнут конец строки
     def appendRow(self, current, prev):
