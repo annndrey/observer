@@ -26,11 +26,6 @@ passwd = 'andreygon'
 
 #надо добавить год, судно, номер рейса, наблюдатель в станции и уловы и сделать их нередактируемыми. 
 
-gear_hide_columns = {
-'tral':[],
-'lov':[],
-'diver':[],
-}
 
 
 #получение списка колонок для каждой группы видов
@@ -52,6 +47,13 @@ None:'',
 'craboid':u'крабоиды',
 }
 
+typesurvey = {'1':u'траловая',
+              '2':u'ловушечная',
+              '3':u'водолазная',
+              '4':u'комбинированная',
+              }
+
+
 station_headers = [u'станция',
 u'№ в судовом журнале', 
 u'дата постановки', 
@@ -60,87 +62,94 @@ u'дата выборки',
 u'время выборки', 
 u'глубина начала', 
 u'глубина конца', 
+u'скорость траления, узл.',
+u'глубина траления',
+u'длина ваеров',
 u'грунт', 
 u'координаты начала', 
 u'координаты конца', 
-u'орудие лова', 
-u'вид наживки', 
+#u'орудие лова', 
 u'ячея', 
 u'расстояние между ловушками', 
 u'число ловушек', 
 u'обработано', 
+u'Вес пробы',
 u'атм. давление, гПа', 
 u'Т возд.,°С', 
 u'V ветра, м/с', 
 u'направление ветра', 
 u'волнение', 
-u'Т воды.,°С']
+u'Т поверхн. воды.,°С', 
+u'T воды у дна, °С']
 
-station_headers_dict = {'station_number':u'станция', 
-'journ_station':u'№ в судовом журнале', 
-'begdate':u'дата постановки', 
-'begtime':u'время постановки', 
-'enddate':u'дата выборки', 
-'enttime':u'время выборки', 
-'begdepth':u'глубина начала', 
-'enddepth':u'глубина конца', 
+station_headers_dict = {'numstn':u'станция', 
+'numjurnalstn':u'№ в судовом журнале', 
+'datebegin':u'дата постановки', 
+'timebegin':u'время постановки', 
+'dateend':u'дата выборки', 
+'timeend':u'время выборки', 
+'depthbeg':u'глубина начала', 
+'depthend':u'глубина конца', 
+'vtral':u'скорость траления, узл.',
+'depthtral':u'глубина траления',
+'wirelength':u'длина ваеров',
 'bottomcode':u'грунт', 
-'beglatgrad beglatmin beglonggrad beglongmin':u'координаты начала', 
-'endlatgrad endlatmin endlonggrad endlongmin':u'координаты конца', 
-'begdepth':u'глубина начала', 
-'enddepth':u'глубина конца', 
-'gearcode':u'орудие лова', 
-'???':u'вид наживки', 
-'????':u'ячея', 
+'latgradbeg, latminbeg, longradbeg, lonminbeg':u'координаты начала', 
+'latgradend, latminend, longradend, lonminend':u'координаты конца', 
+#'gearcode':u'орудие лова', 
+'cell':u'ячея', 
 'trapdist':u'расстояние между ловушками', 
 'nlov':u'число ловушек', 
-'?????':u'обработано', 
-'pressure':u'атм. давление, гПа', 
-'surfacetemp':u'Т возд.,°С', 
-'windspeed':u'V ветра, м/с', 
-'winddirection':u'направление ветра', 
+'nlovobr':u'обработано', 
+'press':u'атм. давление, гПа', 
+'t':u'Т возд.,°С', 
+'vwind':u'V ветра, м/с', 
+'rwind':u'направление ветра', 
 'wave':u'волнение', 
-'temp':u'Т воды.,°С'}
+'tsurface':u'Т поверхн. воды.,°С', 
+'tbottom':u'T воды у дна, °С',
+'samplewght':u'Вес пробы',
+}
 
 #это все столбцы станций
 #myear
 #vesselcode
 #numsurvey
-#numstn
+# numstn
 #typesurvey
-#numjurnalstn
-#nlov
+# numjurnalstn
+# nlov
 #gearcode
-#vtral
-#datebegin
-#timebegin
-#latgradbeg
-#latminbeg
-#longradbeg
-#lonminbeg
-#depthbeg
-#dateend
-#timeend
-#latgradend
-#latminend
-#longradend
-#lonminend
-#depthend
-#depthtral
-#wirelength
-#nlovobr
-#bottomcode
-#press
-#t
-#vwind
-#rwind
-#wave
-#tsurface
-#tbottom
-#samplewght
+# vtral
+# datebegin
+# timebegin
+# latgradbeg
+# latminbeg
+# longradbeg
+# lonminbeg
+# depthbeg
+# dateend
+# timeend
+# latgradend
+# latminend
+# longradend
+# lonminend
+# depthend
+# depthtral
+# wirelength
+# nlovobr
+# bottomcode
+# press
+# t
+# vwind
+# rwind
+# wave
+# tsurface
+# tbottom
+# samplewght
 #observnum
-#cell
-#trapdist
+# cell
+# trapdist
 #formcatch
 #lcatch
 #wcatch
@@ -148,8 +157,8 @@ station_headers_dict = {'station_number':u'станция',
 #nentr
 #kurs
 #observcode
-#ngrupspec
-#flagsgrup
+#ngrupspec?
+#flagsgrup?
 
 #это уловы
 #myear
@@ -322,6 +331,26 @@ bio_headers_dict = {'shellheight':u'высота раковины',
 'spfform':u'форма сперматофоров', 
 'mating':u'следы спаривания'}
 
+#номера колонок, которые надо скрывать
+stations_hide_columns = {
+u'траловая':[station_headers.index(u'скорость траления, узл.'), 
+        station_headers.index(u'глубина траления'),
+        station_headers.index(u'длина ваеров'),
+        station_headers.index(u'ячея'),
+        ],
+u'ловушечная':[station_headers.index(u'расстояние между ловушками'),
+       station_headers.index(u'число ловушек'),
+       station_headers.index(u'обработано'),
+       station_headers.index(u'ячея'),
+       ],
+u'водолазная':[],
+u'комбинированная':[],
+}
+
+catch_hide_columns = []
+
+bio_hide_columns = []
+
 column_names_query = """select column_name from information_schema.columns where table_name ilike '%%%s'"""
 
 class TripForm(QtGui.QDialog):
@@ -352,9 +381,15 @@ class MainView(QtGui.QMainWindow):
 
         self.conn = psycopg2.connect("dbname='%s' user='%s' host='%s' port=%d  password='%s'" % (dbname, user, host, port, passwd))
         self.cur = self.conn.cursor()
-       
+        
         #форма настроек рейса
         self.tripForm = TripForm(self)
+        
+        #добавление судов в форму настроек рейса
+        self.cur.execute('select name, vesselcode from vessel_spr order by name;')
+        for i in xrange(self.cur.rowcount):
+            vessel = self.cur.fetchone()
+            self.tripForm.ui.vesselComboBox.addItem(QtCore.QString(u'%s, %s' % (vessel[0].decode('utf-8'), vessel[1].decode('utf-8'))))
         #добавление групп организмов в форму настроек рейса
         self.cur.execute('select distinct grup from species_spr order by grup asc;')
         for i in xrange(self.cur.rowcount):
@@ -371,16 +406,14 @@ class MainView(QtGui.QMainWindow):
         #                  bio
         
         #Исходная пустая строка для станций
+
+        #Первоначатьный запрос для получения первичных данных
+        
+
         init_list = []
         for i in xrange(len(station_headers)):
             init_list.append('')
         
-        self.ui.stationsTableView.setModel(TableModel([init_list,], station_headers, self.undoStack, self.conn, self.statusBar, station_headers, self))
-        self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
-        self.ui.stationsTableView.resizeColumnsToContents()
-        self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
-
         #уловы
         #Исходная пустая строка для уловов
         init_list = []
@@ -396,6 +429,16 @@ class MainView(QtGui.QMainWindow):
         self.bioselectionModel = QtGui.QItemSelectionModel(self.ui.bioTableView.model())
         self.ui.bioTableView.setSelectionModel(self.bioselectionModel)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
+
+
+        #скрытие колонок
+        #cols_to_hide = []
+        #for i in stations_hide_columns.keys():
+        #    if i != unicode(self.tripForm.ui.surveycomboBox.currentText()):
+        #        for j in stations_hide_columns[i]:
+        #            cols_to_hide.append(j)
+        #self.hideColumns(self.ui.stationsTableView, cols_to_hide)
+
 
         #Delegates
         #Делегаты для станций
@@ -491,7 +534,9 @@ class MainView(QtGui.QMainWindow):
         self.ui.catchTableView.setItemDelegateForColumn(0, catchDelegate)
         #вид
         speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
-        self.addDelegate()
+
+        #применение настроек из формы настройки рейса
+        self.applyChanges()
         
 
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
@@ -509,7 +554,7 @@ class MainView(QtGui.QMainWindow):
         #Показ формы настроек рейса и пр.
         self.connect(self.ui.setupaction, QtCore.SIGNAL('triggered()'), self.tripForm.show)
         self.connect(spindelegate0, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
-        self.connect(self.tripForm.ui.buttonBox, QtCore.SIGNAL('accepted()'), self.addDelegate)
+        self.connect(self.tripForm.ui.buttonBox, QtCore.SIGNAL('accepted()'), self.applyChanges)
         #self.connect(spindelegate1, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         
         
@@ -526,10 +571,52 @@ class MainView(QtGui.QMainWindow):
             table.hideColumn(i)
 
 
-    def addDelegate(self):
+
+    def applyChanges(self):
+        #функция применяет изменения, внесенные в 
+        #форму настроек рейса
+        #По идее, отсюда же надо получать данные для наших таблиц
+        year = self.tripForm.ui.yearDateEdit.date().year()
+        print year
+        vesselcode = unicode(self.tripForm.ui.vesselComboBox.currentText()).split(u', ')[-1]
+        print vesselcode
+        numsurvey = self.tripForm.ui.tripSpinBox.value()
+        print numsurvey
+        select_query = []
+        for i in station_headers:
+            select_query.append(station_headers_dict.keys()[station_headers_dict.values().index(i)])
+
+        query =  u'select ' + u', '.join(select_query) + ' from stations ' + """ where myear = %s and vesselcode = '%s' and numsurvey = %s""" % (year, vesselcode, numsurvey)
+        self.cur.execute(query)
+        data = []
+        for row in self.cur.fetchall():
+            data.append(row)
+        
+        self.ui.stationsTableView.setModel(TableModel(data, station_headers, self.undoStack, self.conn, self.statusBar, station_headers, self))
+        self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
+        self.ui.stationsTableView.resizeColumnsToContents()
+        self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
+
+
+        #скрытие и показ ячеек
+        cols_to_hide = []
+        cols_to_show = []
+        for i in stations_hide_columns.keys():
+            if i != unicode(self.tripForm.ui.surveycomboBox.currentText()):
+                for j in stations_hide_columns[i]:
+                    cols_to_hide.append(j)
+            else:
+                for j in stations_hide_columns[i]:
+                    cols_to_show.append(j)
+        self.hideColumns(self.ui.stationsTableView, cols_to_hide)
+        self.showColumns(self.ui.stationsTableView, cols_to_show)
+
+        #добавление/изменение делегата для колонки видов
         speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         sp_obj = unicode(self.tripForm.ui.objectComboBox.currentText())
         sp_obj = objects_dict.keys()[objects_dict.values().index(sp_obj)]
+        
         self.cur.execute("""select distinct namerus, namelat from species_spr where grup = '%s' order by namerus asc""" % sp_obj)
         for i in xrange(self.cur.rowcount):
             
