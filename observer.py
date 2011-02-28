@@ -47,10 +47,10 @@ None:'',
 'craboid':u'крабоиды',
 }
 
-typesurvey = {'1':u'траловая',
-              '2':u'ловушечная',
-              '3':u'водолазная',
-              '4':u'комбинированная',
+type_survey_dict = {u'траловая':'1',
+              u'ловушечная':'2',
+              u'водолазная':'3',
+              u'комбинированная':'4',
               }
 
 
@@ -82,33 +82,33 @@ u'волнение',
 u'Т поверхн. воды.,°С', 
 u'T воды у дна, °С']
 
-station_headers_dict = {'numstn':u'станция', 
-'numjurnalstn':u'№ в судовом журнале', 
-'datebegin':u'дата постановки', 
-'timebegin':u'время постановки', 
-'dateend':u'дата выборки', 
-'timeend':u'время выборки', 
-'depthbeg':u'глубина начала', 
-'depthend':u'глубина конца', 
-'vtral':u'скорость траления, узл.',
-'depthtral':u'глубина траления',
-'wirelength':u'длина ваеров',
-'bottomcode':u'грунт', 
-'latgradbeg, latminbeg, longradbeg, lonminbeg':u'координаты начала', 
-'latgradend, latminend, longradend, lonminend':u'координаты конца', 
+station_headers_dict = {'stations.numstn':u'станция', 
+'stations.numjurnalstn':u'№ в судовом журнале', 
+'stations.datebegin':u'дата постановки', 
+'stations.timebegin':u'время постановки', 
+'stations.dateend':u'дата выборки', 
+'stations.timeend':u'время выборки', 
+'stations.depthbeg':u'глубина начала', 
+'stations.depthend':u'глубина конца', 
+'stations.vtral':u'скорость траления, узл.',
+'stations.depthtral':u'глубина траления',
+'stations.wirelength':u'длина ваеров',
+'grunt_spr.name':u'грунт', 
+'stations.latgradbeg, stations.latminbeg, stations.longradbeg, stations.lonminbeg':u'координаты начала', 
+'stations.latgradend, stations.latminend, stations.longradend, stations.lonminend':u'координаты конца', 
 #'gearcode':u'орудие лова', 
-'cell':u'ячея', 
-'trapdist':u'расстояние между ловушками', 
-'nlov':u'число ловушек', 
-'nlovobr':u'обработано', 
-'press':u'атм. давление, гПа', 
-'t':u'Т возд.,°С', 
-'vwind':u'V ветра, м/с', 
-'rwind':u'направление ветра', 
-'wave':u'волнение', 
-'tsurface':u'Т поверхн. воды.,°С', 
-'tbottom':u'T воды у дна, °С',
-'samplewght':u'Вес пробы',
+'stations.cell':u'ячея', 
+'stations.trapdist':u'расстояние между ловушками', 
+'stations.nlov':u'число ловушек', 
+'stations.nlovobr':u'обработано', 
+'stations.press':u'атм. давление, гПа', 
+'stations.t':u'Т возд.,°С', 
+'stations.vwind':u'V ветра, м/с', 
+'stations.rwind':u'направление ветра', 
+'stations.wave':u'волнение', 
+'stations.tsurface':u'Т поверхн. воды.,°С', 
+'stations.tbottom':u'T воды у дна, °С',
+'stations.samplewght':u'Вес пробы',
 }
 
 #это все столбцы станций
@@ -405,6 +405,8 @@ class MainView(QtGui.QMainWindow):
         #                  catch
         #                  bio
         
+            
+        
         #Исходная пустая строка для станций
 
         #Первоначатьный запрос для получения первичных данных
@@ -414,6 +416,12 @@ class MainView(QtGui.QMainWindow):
         for i in xrange(len(station_headers)):
             init_list.append('')
         
+        self.ui.stationsTableView.setModel(TableModel([init_list, ], station_headers, self.undoStack, self.conn, self.statusBar, station_headers, self))
+        self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
+        self.ui.stationsTableView.resizeColumnsToContents()
+        self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
+
         #уловы
         #Исходная пустая строка для уловов
         init_list = []
@@ -448,7 +456,6 @@ class MainView(QtGui.QMainWindow):
         spindelegate1 = SpinBoxDelegate(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(0, spindelegate0)
         self.ui.stationsTableView.setItemDelegateForColumn(1, spindelegate1)
-
         #delegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
         #self.ui.bioTableView.setItemDelegateForColumn(0, delegate)
 
@@ -459,8 +466,8 @@ class MainView(QtGui.QMainWindow):
         coordvalidator = QtGui.QRegExpValidator(coordRegexp, self)
         coordBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)
         coordEndDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)
-        self.ui.stationsTableView.setItemDelegateForColumn(9, coordBegDelegate)
-        self.ui.stationsTableView.setItemDelegateForColumn(10, coordEndDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(12, coordBegDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(13, coordEndDelegate)
         
         #дата начала
         dateBegDelegate = DateDelegate(self.ui.stationsTableView.model())
@@ -480,61 +487,76 @@ class MainView(QtGui.QMainWindow):
         #глубина конца
         depthEndDelegate = IntDelegate([0, 11022, 0], self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(7, depthEndDelegate)
+        #скорость траления
+        trawlSpeedDelegate = FloatDelegate([0, 15, 2.5], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(8, trawlSpeedDelegate)
+        #глубина траления
+        trawlDepthDelegate = IntDelegate([0, 11022, 250], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(9, trawlDepthDelegate)
+        #длина ваеров
+        dragropeLengthDelegate = IntDelegate([0, 10000, 700], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(10, dragropeLengthDelegate)
         #грунт
-        self.cur.execute("select name from grunt_spr where char_length(name) > 0 order by bottomcode desc;")
+        self.cur.execute("select name from grunt_spr order by bottomcode desc;")
         bottomDelegate = ComboBoxDelegate(self.ui.stationsTableView.model())
         for i in xrange(self.cur.rowcount):
             bottomDelegate.addValue(unicode(self.cur.fetchone()[0].decode('utf-8')))
-        self.ui.stationsTableView.setItemDelegateForColumn(8, bottomDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(11, bottomDelegate)
         #орудие лова
         #переделать. чтобы было select name from gear_spr where mtype = [int]
         #mtype брать из настроек рейса - тип съемки. 
         #то же самое для списка видов.
         #и в зависимости от типа съемки и вида показывать или прятать те или иные ячейки
-        self.cur.execute("select name from gear_spr order by gearcode asc;")
-        gearDelegate = ComboBoxDelegate(self.ui.stationsTableView.model())
-        for i in xrange(self.cur.rowcount):
-            gearDelegate.addValue(unicode(self.cur.fetchone()[0].decode('utf-8')))
-        self.ui.stationsTableView.setItemDelegateForColumn(11, gearDelegate)
+        #self.cur.execute("select name from gear_spr order by gearcode asc;")
+        #gearDelegate = ComboBoxDelegate(self.ui.stationsTableView.model())
+        #for i in xrange(self.cur.rowcount):
+        #    gearDelegate.addValue(unicode(self.cur.fetchone()[0].decode('utf-8')))
+        #self.ui.stationsTableView.setItemDelegateForColumn(11, gearDelegate)
         
         #ячея
         cellDelegate = IntDelegate([1, 1000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(13, cellDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(14, cellDelegate)
         #расстояние между ловушками
         trapdistDelegate = IntDelegate([1, 1000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(14, trapdistDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(15, trapdistDelegate)
         #количество ловушек
         trapnumDelegate = IntDelegate([1, 10000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(15, trapnumDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(16, trapnumDelegate)
         #кол-во обработанных ловушек
         trapprocessedDelegate = IntDelegate([0, 10000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(16, trapprocessedDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(17, trapprocessedDelegate)
+        #вес пробы
+        sampleWeightDelegate = IntDelegate([0, 10000, 1], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(18, sampleWeightDelegate)
         #давление воздуха min и max - отсюда [http://meteoclub.ru/index.php?action=vthread&topic=922]
         pressDelegate = IntDelegate([880, 1134, 1013], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(17, pressDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(19, pressDelegate)
         #температура воздуха
         temperDelegate = IntDelegate([-89, 60, 22], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(18, temperDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(20, temperDelegate)
         #скорость ветра
         windSpeedDelegate = IntDelegate([0, 50, 3], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(19, windSpeedDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(21, windSpeedDelegate)
         #направление ветра, румбы. Румб - 1/32 окружности
         windDirectDelegate = IntDelegate([1, 32, 17], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(20, windDirectDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(22, windDirectDelegate)
         #волнение моря, баллы 0-9
         seaSurfDelegate = IntDelegate([0, 9, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(21, seaSurfDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(23, seaSurfDelegate)
         #температура воды
         seaTempDelegate = IntDelegate([-4, 45, 10], self.ui.stationsTableView.model())  
-        self.ui.stationsTableView.setItemDelegateForColumn(22, seaTempDelegate)
-
+        self.ui.stationsTableView.setItemDelegateForColumn(24, seaTempDelegate)
+        #температура у дна
+        bottomTempDelegate = IntDelegate([-6, 45, 4], self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(25, bottomTempDelegate)
+        
         #Делегаты для уловов
         #станция
         catchDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         self.ui.catchTableView.setItemDelegateForColumn(0, catchDelegate)
         #вид
         speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
-
+        
         #применение настроек из формы настройки рейса
         self.applyChanges()
         
@@ -575,29 +597,43 @@ class MainView(QtGui.QMainWindow):
     def applyChanges(self):
         #функция применяет изменения, внесенные в 
         #форму настроек рейса
-        #По идее, отсюда же надо получать данные для наших таблиц
+
         year = self.tripForm.ui.yearDateEdit.date().year()
-        print year
+        #print year
         vesselcode = unicode(self.tripForm.ui.vesselComboBox.currentText()).split(u', ')[-1]
-        print vesselcode
+        #print vesselcode
         numsurvey = self.tripForm.ui.tripSpinBox.value()
-        print numsurvey
+        #print numsurvey
+        typesurvey = type_survey_dict[unicode(self.tripForm.ui.surveycomboBox.currentText())]
+
         select_query = []
         for i in station_headers:
             select_query.append(station_headers_dict.keys()[station_headers_dict.values().index(i)])
 
-        query =  u'select ' + u', '.join(select_query) + ' from stations ' + """ where myear = %s and vesselcode = '%s' and numsurvey = %s""" % (year, vesselcode, numsurvey)
+        query =  u'select ' + u', '.join(select_query) + ' from stations, grunt_spr ' + """ where myear = %s and vesselcode = '%s' and numsurvey = %s and typesurvey = %s and stations.bottomcode = grunt_spr.bottomcode""" % (year, vesselcode, numsurvey, typesurvey)
+        print query
         self.cur.execute(query)
         data = []
         for row in self.cur.fetchall():
+            
+            row = list(row)
+            start_coord = '.'.join(map(str, row[12:16]))
+            end_coord = '.'.join(map(str, row[16:20]))
+            try:
+                row[11] = row[11].decode('utf-8')
+            except:
+                pass
+            row[12] = start_coord
+            row[13] = end_coord
+            del(row[14:20])
             data.append(row)
         
-        self.ui.stationsTableView.setModel(TableModel(data, station_headers, self.undoStack, self.conn, self.statusBar, station_headers, self))
-        self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
-        self.ui.stationsTableView.resizeColumnsToContents()
-        self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
-
+        #добавление данных к модели
+        if len(data) > 0:
+            self.ui.stationsTableView.model().dbdata = data
+        else:
+            self.ui.stationsTableView.model().dbdata.append(data)
+        self.ui.stationsTableView.model().reset()
 
         #скрытие и показ ячеек
         cols_to_hide = []
@@ -639,8 +675,8 @@ class MainView(QtGui.QMainWindow):
             model.insertRow(current.row()+1, current)
             #print 'row', current.row(), prev.row(), maxrow
             #print 'column', current.column(), prev.column(), maxcolumn
-        #else:
-        #    print current.parent()
+        else:
+            print current.column()
     
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -736,6 +772,27 @@ class TableModel(QtCore.QAbstractTableModel):
             return QtCore.Qt.ItemIsEnabled
 
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+
+class FloatDelegate(QtGui.QItemDelegate):
+    def __init__(self, val_range, parent = None):
+        QtGui.QItemDelegate.__init__(self, parent)
+        self.minmax = val_range
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QDoubleSpinBox(parent)
+        editor.setMinimum(self.minmax[0])
+        editor.setMaximum(self.minmax[1])
+        return editor
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, QtCore.Qt.EditRole).toFloat()[0]
+        if value == 0:
+            editor.setValue(self.minmax[2])
+        else:
+            editor.setValue(value)
+
+    def setModelData(self, editor, model, index):
+        value = editor.value()
+        model.setData(index, value, QtCore.Qt.EditRole)
+
 
 class IntDelegate(QtGui.QItemDelegate):
     def __init__(self, val_range, parent = None):
