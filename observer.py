@@ -420,6 +420,7 @@ class MainView(QtGui.QMainWindow):
         self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
         self.ui.stationsTableView.resizeColumnsToContents()
+        self.ui.stationsTableView.setSortingEnabled(True)
         self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #уловы
@@ -632,11 +633,8 @@ class MainView(QtGui.QMainWindow):
         if len(data) > 0:
             self.ui.stationsTableView.model().dbdata = data
         else:
-<<<<<<< HEAD
-            self.ui.stationsTableView.model().dbdata.append(data)
-=======
             pass
->>>>>>> d716e37b748984ecf28cde187384fd89040f6315
+
         self.ui.stationsTableView.model().reset()
 
         #скрытие и показ ячеек
