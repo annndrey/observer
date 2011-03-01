@@ -632,7 +632,11 @@ class MainView(QtGui.QMainWindow):
         if len(data) > 0:
             self.ui.stationsTableView.model().dbdata = data
         else:
+<<<<<<< HEAD
             self.ui.stationsTableView.model().dbdata.append(data)
+=======
+            pass
+>>>>>>> d716e37b748984ecf28cde187384fd89040f6315
         self.ui.stationsTableView.model().reset()
 
         #скрытие и показ ячеек
