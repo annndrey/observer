@@ -420,6 +420,7 @@ class MainView(QtGui.QMainWindow):
         self.stationsselectionModel = QtGui.QItemSelectionModel(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
         self.ui.stationsTableView.resizeColumnsToContents()
+        self.ui.stationsTableView.setSortingEnabled(True)
         self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #уловы
