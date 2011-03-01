@@ -2532,7 +2532,6 @@ COPY gear_spr (gearcode, mtype, name, kf, vertraskr, gorizraskr, sizecell, selec
 --
 
 COPY grunt_spr (bottomcode, name, mtype, size_mm) FROM stdin;
-0			
 1	Глыбы	Валуны	1000-500
 2	Валуны крупные	Валуны	500-250
 3	Валуны средние	Валуны	250-100
@@ -2550,6 +2549,7 @@ COPY grunt_spr (bottomcode, name, mtype, size_mm) FROM stdin;
 15	Ил мелкоалевритовый	Ил	0,01-0,007
 16	Ил алевроитоглинистый	Ил	<0,007
 17	Ил глинистый	Ил	<0,007
+0	Неизвестно		
 \.
 
 
