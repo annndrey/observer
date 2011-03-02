@@ -634,6 +634,7 @@ class MainView(QtGui.QMainWindow):
             self.ui.stationsTableView.model().dbdata = data
         else:
             pass
+
         self.ui.stationsTableView.model().reset()
 
         #скрытие и показ ячеек
