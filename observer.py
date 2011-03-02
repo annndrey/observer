@@ -194,15 +194,15 @@ u'непром. самцы, шт',
 u'самки, шт', 
 u'комментарий',]
 
-catch_headers_dict = {'station_number':u'№ станции', 
-'species_code':u'вид', 
-'catch':u'улов', 
-'commercial_catch':u'комм. улов', 
-'sampleweigth':u'вес пробы', 
-'catch_pieces':u'пром. самцы, шт', 
-'noncommercial_catch':u'непром. самцы, шт', 
-'catch_females':u'самки, шт', 
-'comment1':u'комментарий',}
+catch_headers_dict = {'catch.numstn':u'№ станции', 
+'species_spr.namerus, species_spr.namelat':u'вид', 
+'catch.catch':u'улов', 
+'catch.commcatch':u'комм. улов', 
+'catch.samplewght':u'вес пробы', 
+'catch.catchpromm':u'пром. самцы, шт', 
+'catch.catchnonpromm':u'непром. самцы, шт', 
+'catch.catchf':u'самки, шт', 
+'catch.comment1':u'комментарий',}
 
 bio_groups = [u'криль', u'креветки', 
 u'головоногие', 
@@ -347,6 +347,7 @@ u'водолазная':[],
 u'комбинированная':[],
 }
 
+#в уловах скрывать ничего не надо
 catch_hide_columns = []
 
 bio_hide_columns = []
@@ -439,7 +440,6 @@ class MainView(QtGui.QMainWindow):
         self.ui.bioTableView.setSelectionModel(self.bioselectionModel)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
-
         #скрытие колонок
         #cols_to_hide = []
         #for i in stations_hide_columns.keys():
@@ -447,16 +447,19 @@ class MainView(QtGui.QMainWindow):
         #        for j in stations_hide_columns[i]:
         #            cols_to_hide.append(j)
         #self.hideColumns(self.ui.stationsTableView, cols_to_hide)
-
-
+        #применение настроек из формы настройки рейса
+        #оно стоит тут, т.к. иначе оно срабатывает после того, как создаются делегаты
+        #и при попытке что-то сделать программа умирает с сообщением о SegmentationFault...
+        self.applyChanges()
+        
         #Delegates
         #Делегаты для станций
 
         #станции
-        spindelegate0 = SpinBoxDelegate(self.ui.stationsTableView.model())
-        spindelegate1 = SpinBoxDelegate(self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(0, spindelegate0)
-        self.ui.stationsTableView.setItemDelegateForColumn(1, spindelegate1)
+        self.spindelegate0 = SpinBoxDelegate(self.ui.stationsTableView.model())
+        self.spindelegate1 = SpinBoxDelegate(self.ui.stationsTableView.model())
+        self.ui.stationsTableView.setItemDelegateForColumn(0, self.spindelegate0)
+        self.ui.stationsTableView.setItemDelegateForColumn(1, self.spindelegate1)
         #delegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
         #self.ui.bioTableView.setItemDelegateForColumn(0, delegate)
 
@@ -553,13 +556,13 @@ class MainView(QtGui.QMainWindow):
         
         #Делегаты для уловов
         #станция
-        catchDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
-        self.ui.catchTableView.setItemDelegateForColumn(0, catchDelegate)
+        catchStDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(0, catchStDelegate)
         #вид
         speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         
-        #применение настроек из формы настройки рейса
-        self.applyChanges()
+        
+
         
 
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
@@ -576,7 +579,7 @@ class MainView(QtGui.QMainWindow):
         
         #Показ формы настроек рейса и пр.
         self.connect(self.ui.setupaction, QtCore.SIGNAL('triggered()'), self.tripForm.show)
-        self.connect(spindelegate0, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
+        self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), catchStDelegate.addValue)
         self.connect(self.tripForm.ui.buttonBox, QtCore.SIGNAL('accepted()'), self.applyChanges)
         #self.connect(spindelegate1, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         
@@ -593,8 +596,6 @@ class MainView(QtGui.QMainWindow):
         for i in columns:
             table.hideColumn(i)
 
-
-
     def applyChanges(self):
         #функция применяет изменения, внесенные в 
         #форму настроек рейса
@@ -606,13 +607,15 @@ class MainView(QtGui.QMainWindow):
         numsurvey = self.tripForm.ui.tripSpinBox.value()
         #print numsurvey
         typesurvey = type_survey_dict[unicode(self.tripForm.ui.surveycomboBox.currentText())]
-
+        
+        #пошла обработка таблицы станций
         select_query = []
         for i in station_headers:
             select_query.append(station_headers_dict.keys()[station_headers_dict.values().index(i)])
 
         query =  u'select ' + u', '.join(select_query) + ' from stations, grunt_spr ' + """ where myear = %s and vesselcode = '%s' and numsurvey = %s and typesurvey = %s and stations.bottomcode = grunt_spr.bottomcode""" % (year, vesselcode, numsurvey, typesurvey)
-        print query
+        #print query
+        
         self.cur.execute(query)
         data = []
         for row in self.cur.fetchall():
@@ -628,13 +631,12 @@ class MainView(QtGui.QMainWindow):
             row[13] = end_coord
             del(row[14:20])
             data.append(row)
-        
-        #добавление данных к модели
+        #вывод сообщения на статус-бар
+        self.statusBar().showMessage(u'%s год, %s, %s съемка, %s' % (year, unicode(self.tripForm.ui.vesselComboBox.currentText()).split(u', ')[0], unicode(self.tripForm.ui.surveycomboBox.currentText()), unicode(self.tripForm.ui.objectComboBox.currentText())))
+        #добавление данных к модели станций
         if len(data) > 0:
             self.ui.stationsTableView.model().dbdata = data
-        else:
-            pass
-
+        
         self.ui.stationsTableView.model().reset()
 
         #скрытие и показ ячеек
@@ -654,7 +656,7 @@ class MainView(QtGui.QMainWindow):
         speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         sp_obj = unicode(self.tripForm.ui.objectComboBox.currentText())
         sp_obj = objects_dict.keys()[objects_dict.values().index(sp_obj)]
-        
+
         self.cur.execute("""select distinct namerus, namelat from species_spr where grup = '%s' order by namerus asc""" % sp_obj)
         for i in xrange(self.cur.rowcount):
             
@@ -666,6 +668,29 @@ class MainView(QtGui.QMainWindow):
                 pass
             #speciesDelegate.addValue(u'')
         self.ui.catchTableView.setItemDelegateForColumn(1, speciesDelegate)
+
+        #пошла обработка таблицы уловов
+        #speciescode = 
+        select_query_catch = []
+        for i in catch_headers:
+            select_query_catch.append(catch_headers_dict.keys()[catch_headers_dict.values().index(i)])
+        print select_query_catch
+        query_catch = u'select ' + u', '.join(select_query_catch) + ' from catch, species_spr ' + """ where myear = %s and vesselcode = '%s' and numsurvey = %s and catch.speciescode = species_spr.speciescode and catch.grup = '%s'""" % (year, vesselcode, numsurvey, sp_obj)
+        #print query_catch
+        self.cur.execute(query_catch)
+        data_catch = []
+        
+        for row in self.cur.fetchall():
+            #print row
+            row = list(row)
+            row[1] = u'%s (%s)' % (row[1].decode('utf-8'), row[2].decode('utf-8'))
+            del(row[2])
+            data_catch.append(row)
+        if len(data_catch) > 0:
+            self.ui.catchTableView.model().dbdata = data_catch
+        self.ui.catchTableView.model().reset()
+
+        #сокрытие колонок в таблице уловов - ничего скрывать не надо! (вроде бы)
 
     #Вот тут будем добавлять новую строчку после того, как будет достигнут конец строки
     def appendRow(self, current, prev):
