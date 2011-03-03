@@ -422,6 +422,8 @@ class MainView(QtGui.QMainWindow):
         self.ui.stationsTableView.setSelectionModel(self.stationsselectionModel)
         self.ui.stationsTableView.resizeColumnsToContents()
         self.ui.stationsTableView.setSortingEnabled(True)
+        self.ui.stationsTableView.setAlternatingRowColors(True)
+        self.ui.stationsTableView.verticalHeader().setDefaultSectionSize(20)
         self.connect(self.stationsselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #уловы
@@ -432,12 +434,18 @@ class MainView(QtGui.QMainWindow):
         self.ui.catchTableView.setModel(TableModel([init_list, ], catch_headers, self.undoStack, self.conn, self.statusBar, catch_headers, self))
         self.catchselectionModel = QtGui.QItemSelectionModel(self.ui.catchTableView.model())
         self.ui.catchTableView.setSelectionModel(self.catchselectionModel)
+        self.ui.catchTableView.setSortingEnabled(True)
+        self.ui.catchTableView.setAlternatingRowColors(True)
+        self.ui.catchTableView.verticalHeader().setDefaultSectionSize(20)
         self.connect(self.catchselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #биоанализы
         self.ui.bioTableView.setModel(TableModel([range(1,len(bio_headers_dict)), bio_headers_dict.values(), bio_headers_dict.keys()], bio_headers_dict.values(), self.undoStack, self.conn, self.statusBar, bio_headers_dict.keys(), self))
         self.bioselectionModel = QtGui.QItemSelectionModel(self.ui.bioTableView.model())
         self.ui.bioTableView.setSelectionModel(self.bioselectionModel)
+        self.ui.bioTableView.setSortingEnabled(True)
+        self.ui.bioTableView.setAlternatingRowColors(True)
+        self.ui.bioTableView.verticalHeader().setDefaultSectionSize(20)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #скрытие колонок
@@ -674,7 +682,7 @@ class MainView(QtGui.QMainWindow):
         select_query_catch = []
         for i in catch_headers:
             select_query_catch.append(catch_headers_dict.keys()[catch_headers_dict.values().index(i)])
-        print select_query_catch
+        #print select_query_catch
         query_catch = u'select ' + u', '.join(select_query_catch) + ' from catch, species_spr ' + """ where myear = %s and vesselcode = '%s' and numsurvey = %s and catch.speciescode = species_spr.speciescode and catch.grup = '%s'""" % (year, vesselcode, numsurvey, sp_obj)
         #print query_catch
         self.cur.execute(query_catch)
@@ -703,7 +711,7 @@ class MainView(QtGui.QMainWindow):
             #print 'row', current.row(), prev.row(), maxrow
             #print 'column', current.column(), prev.column(), maxcolumn
         else:
-            print current.column()
+            pass#print current.column()
     
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -912,17 +920,19 @@ class DateDelegate(QtGui.QItemDelegate):
         
     def createEditor(self, parent, option, index):
         editor = QtGui.QDateEdit(parent)
+        editor.setDisplayFormat('dd.MM.yyyy')
         return editor
     
     def setEditorData(self, editor, index):
         #Сделать проверку входных значений.
         #если не подходит, то выставлять текущую
+        #try:
+        value = index.model().data(index, QtCore.Qt.EditRole).toString()#[0]
+        #except IndexError:
+        #    value = QtCore.QDate.currentDate()
+        #print value, QtCore.QDate.fromString(value, 'dd.MM.yyyy')
         try:
-            value = index.model().data(index, QtCore.Qt.EditRole).toString()[0]
-        except IndexError:
-            value = QtCore.QDate.currentDate()
-        try:
-            editor.setDate(value)
+            editor.setDate(QtCore.QDate.fromString(value, 'dd.MM.yyyy'))
         except:
             editor.setDate(QtCore.QDate.currentDate())
 
@@ -936,17 +946,19 @@ class TimeDelegate(QtGui.QItemDelegate):
 
     def createEditor(self, parent, option, index):
         editor = QtGui.QTimeEdit(parent)
+        editor.setDisplayFormat('hh:mm')
         return editor
 
     def setEditorData(self, editor, index):
-        try:
-            value = index.model().data(index, QtCore.Qt.EditRole).toString()[0]
-        except IndexError:
-            value = QtCore.QTime.currentTime()
-        try:
-            editor.setTime(value)
-        except:
-            editor.setTime(QtCore.QTime.currentTime())
+        #try:
+        value = index.model().data(index, QtCore.Qt.EditRole).toString()#[0]
+        #print value
+        #except IndexError:
+        #    value = QtCore.QTime.currentTime()
+        #try:
+        editor.setTime(QtCore.QTime.fromString(value, 'hh:mm'))
+        #except:
+        #    editor.setTime(QtCore.QTime.currentTime())
             
     def setModelData(self, editor, model, index):
         value = editor.time()
@@ -972,8 +984,11 @@ class ComboBoxDelegate(QtGui.QItemDelegate):
         value = index.model().data(index, QtCore.Qt.EditRole)#.toInt()[0]
         #self.values.insert(0, unicode(value.toString()))
         #comboBox.addItem(value.toString())
+        #print unicode(value.toString())
+        #print self.values.index(unicode(value.toString()))
         for i in self.values:
             comboBox.addItem(QtCore.QString(unicode(i)))
+        comboBox.setCurrentIndex(self.values.index(unicode(value.toString())))
         #comboBox.setItemText(0, unicode(value.toString()))
         
 
