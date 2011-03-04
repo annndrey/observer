@@ -572,8 +572,9 @@ class MainView(QtGui.QMainWindow):
         #вид
         #speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         #self.ui.catchTableView.setItemDelegateForColumn(1, speciesDelegate)
-        
-
+        #улов
+        self.commonCatchDelegate = IntDelegate([1, 100000, 1], self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(2, self.commonCatchDelegate)
         
 
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
@@ -594,7 +595,7 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.tripForm.ui.buttonBox, QtCore.SIGNAL('accepted()'), self.applyChanges)
         self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), self.showTab)
         #если хотя бы один улов добавлен и не равен 0, то показать биоанализы
-        #self.connect(self.catchStDelegate, QtCore.SIGNAL)
+        self.connect(self.commonCatchDelegate, QtCore.SIGNAL('dataAdded'), self.showTab)
         
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
 
@@ -865,6 +866,7 @@ class IntDelegate(QtGui.QItemDelegate):
     def setModelData(self, editor, model, index):
         value = editor.value()
         model.setData(index, value, QtCore.Qt.EditRole)
+        self.emit(QtCore.SIGNAL("dataAdded"), value)
 
 class LineEditDelegate(QtGui.QItemDelegate):
     #Этот делегат будет уметь фильтровать ввод
@@ -1000,7 +1002,10 @@ class ComboBoxDelegate(QtGui.QItemDelegate):
         #print self.values.index(unicode(value.toString()))
         for i in self.values:
             comboBox.addItem(QtCore.QString(unicode(i)))
-        comboBox.setCurrentIndex(self.values.index(unicode(value.toString())))
+        try:
+            comboBox.setCurrentIndex(self.values.index(unicode(value.toString())))
+        except ValueError:
+            comboBox.setCurrentIndex(0)
         #comboBox.setItemText(0, unicode(value.toString()))
         
 
