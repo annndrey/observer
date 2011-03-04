@@ -458,8 +458,10 @@ class MainView(QtGui.QMainWindow):
         #применение настроек из формы настройки рейса
         #оно стоит тут, т.к. иначе оно срабатывает после того, как создаются делегаты
         #и при попытке что-то сделать программа умирает с сообщением о SegmentationFault...
-        #self.applyChanges()
-        
+        self.applyChanges()
+
+        self.ui.tabWidget.setTabEnabled(1, False)
+        self.ui.tabWidget.setTabEnabled(2, False)
         #Delegates
         #Делегаты для станций
 
@@ -569,7 +571,7 @@ class MainView(QtGui.QMainWindow):
         self.ui.catchTableView.setItemDelegateForColumn(0, self.catchStDelegate)
         #вид
         #speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
-        
+        #self.ui.catchTableView.setItemDelegateForColumn(1, speciesDelegate)
         
 
         
@@ -590,10 +592,16 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.ui.setupaction, QtCore.SIGNAL('triggered()'), self.tripForm.show)
         self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), self.addStation)
         self.connect(self.tripForm.ui.buttonBox, QtCore.SIGNAL('accepted()'), self.applyChanges)
-        #self.connect(spindelegate1, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
-        
+        self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), self.showTab)
+        #если хотя бы один улов добавлен и не равен 0, то показать биоанализы
+        #self.connect(self.catchStDelegate, QtCore.SIGNAL)
         
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
+
+    def showTab(self):
+        tab = self.ui.tabWidget.currentIndex()
+        self.ui.tabWidget.setTabEnabled(tab+1, True)
+
     def test(self):
         print 'OK'
 
