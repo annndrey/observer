@@ -999,7 +999,8 @@ class ComboBoxDelegate(QtGui.QItemDelegate):
     def setModelData(self, comboBox, model, index):
         value = comboBox.currentText()
         model.setData(index, value, QtCore.Qt.EditRole)
-        
+    
+    #вот корень зла!
     #def updateEditorData(self, comboBox, value):
     #    comboBox.addItem(QtCore.QString(value))
         
