@@ -382,7 +382,7 @@ class MainView(QtGui.QMainWindow):
 
         self.conn = psycopg2.connect("dbname='%s' user='%s' host='%s' port=%d  password='%s'" % (dbname, user, host, port, passwd))
         self.cur = self.conn.cursor()
-        
+        self.stations = []
         #форма настроек рейса
         self.tripForm = TripForm(self)
         
@@ -458,7 +458,7 @@ class MainView(QtGui.QMainWindow):
         #применение настроек из формы настройки рейса
         #оно стоит тут, т.к. иначе оно срабатывает после того, как создаются делегаты
         #и при попытке что-то сделать программа умирает с сообщением о SegmentationFault...
-        self.applyChanges()
+        #self.applyChanges()
         
         #Delegates
         #Делегаты для станций
@@ -565,6 +565,7 @@ class MainView(QtGui.QMainWindow):
         #Делегаты для уловов
         #станция
         catchStDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
+        catchStDelegate.values = self.stations
         self.ui.catchTableView.setItemDelegateForColumn(0, catchStDelegate)
         #вид
         speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
@@ -587,7 +588,7 @@ class MainView(QtGui.QMainWindow):
         
         #Показ формы настроек рейса и пр.
         self.connect(self.ui.setupaction, QtCore.SIGNAL('triggered()'), self.tripForm.show)
-        self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), catchStDelegate.addValue)
+        self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), self.addStation)
         self.connect(self.tripForm.ui.buttonBox, QtCore.SIGNAL('accepted()'), self.applyChanges)
         #self.connect(spindelegate1, QtCore.SIGNAL('dataAdded'), catchDelegate.addValue)
         
@@ -595,6 +596,9 @@ class MainView(QtGui.QMainWindow):
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
     def test(self):
         print 'OK'
+
+    def addStation(self, data):
+        self.stations.append(data)
 
     def showColumns(self, table, columns):
         for i in columns:
