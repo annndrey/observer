@@ -18,9 +18,9 @@ import psycopg2, psycopg2.extras
 from psycopg2.extensions import adapt
 
 #Настройки БД по умолчанию. Потом брать из файла настроек.
-dbname = "OBSERVERDB"
+dbname = "observ"
 user = 'annndrey'
-host = 'aldebaran'
+host = 'localhost'
 port = 5432
 passwd = 'andreygon'
 
@@ -564,11 +564,11 @@ class MainView(QtGui.QMainWindow):
         
         #Делегаты для уловов
         #станция
-        catchStDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
-        catchStDelegate.values = self.stations
-        self.ui.catchTableView.setItemDelegateForColumn(0, catchStDelegate)
+        self.catchStDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
+        self.catchStDelegate.values = self.stations
+        self.ui.catchTableView.setItemDelegateForColumn(0, self.catchStDelegate)
         #вид
-        speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
+        #speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         
         
 
@@ -1003,8 +1003,8 @@ class ComboBoxDelegate(QtGui.QItemDelegate):
     #def updateEditorData(self, comboBox, value):
     #    comboBox.addItem(QtCore.QString(value))
         
-    def updateEditorGeometry(self, editor, option, index):
-        editor.setGeometry(option.rect)
+    #def updateEditorGeometry(self, editor, option, index):
+    #    self.comboBox.setGeometry(option.rect)
 
 
 class EditCommand(QtGui.QUndoCommand):
