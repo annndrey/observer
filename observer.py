@@ -831,11 +831,11 @@ class FloatDelegate(QtGui.QStyledItemDelegate):
         editor.setMaximum(self.minmax[1])
         return editor
     def setEditorData(self, editor, index):
-        value = index.model().data(index, QtCore.Qt.EditRole).toFloat()[0]
-        if value == 0:
-            editor.setValue(self.minmax[2])
-        else:
-            editor.setValue(value)
+        #value = index.model().data(index, QtCore.Qt.EditRole).toFloat()[0]
+        #if value == 0:
+        editor.setValue(self.minmax[2])
+        #else:
+        #editor.setValue(value)
 
     def setModelData(self, editor, model, index):
         value = editor.value()
@@ -846,8 +846,9 @@ class IntDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, val_range, parent):
         QtGui.QStyledItemDelegate.__init__(self, parent)
         self.minmax = val_range
-
+        self.parent = parent
     def createEditor(self, parent, option, index):
+        self.parent = parent
         editor = QtGui.QSpinBox(parent)
         #if len(self.minmax) > 2:
         #    editor.setValue(self.minmax[2])
@@ -857,11 +858,12 @@ class IntDelegate(QtGui.QStyledItemDelegate):
         return editor
     
     def setEditorData(self, editor, index):
-        value = index.model().data(index, QtCore.Qt.EditRole).toInt()[0]
-        if value == 0:
-            editor.setValue(self.minmax[2])
-        else:
-            editor.setValue(value)
+        #value =  index.model().data(index, QtCore.Qt.EditRole).toInt()[0]
+        editor.setValue(self.minmax[2])
+        
+        
+        #else:
+        #    self.editor.setValue(self.value)
         
     def setModelData(self, editor, model, index):
         value = editor.value()
