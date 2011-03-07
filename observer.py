@@ -658,7 +658,7 @@ class MainView(QtGui.QMainWindow):
         if len(data) > 0:
             self.ui.stationsTableView.model().dbdata = data
         
-        self.ui.stationsTableView.model().reset()
+            self.ui.stationsTableView.model().reset()
 
         #скрытие и показ ячеек
         cols_to_hide = []
@@ -720,7 +720,11 @@ class MainView(QtGui.QMainWindow):
         maxcolumn = len(model.dbdata[0])
         
         if current.row()+1 == maxrow and current.column()+1 == maxcolumn:
+            #хорошая проверка. надо оставить, чтобы неповадно было создавать новые
+            #строки, не заполнив старых
+            #if model.dbdata[current.row()][0] != '':
             model.insertRow(current.row()+1, current)
+            
             #print 'row', current.row(), prev.row(), maxrow
             #print 'column', current.column(), prev.column(), maxcolumn
         else:
@@ -831,11 +835,14 @@ class FloatDelegate(QtGui.QStyledItemDelegate):
         editor.setMaximum(self.minmax[1])
         return editor
     def setEditorData(self, editor, index):
-        #value = index.model().data(index, QtCore.Qt.EditRole).toFloat()[0]
-        #if value == 0:
-        editor.setValue(self.minmax[2])
-        #else:
-        #editor.setValue(value)
+        model =index.model()
+        ind = model.createIndex(index.row(), index.column())
+        value =model.data(ind, QtCore.Qt.EditRole).toFloat()[0]
+        
+        if value == 0:
+            editor.setValue(self.minmax[2])
+        else:
+            editor.setValue(value)
 
     def setModelData(self, editor, model, index):
         value = editor.value()
@@ -858,13 +865,15 @@ class IntDelegate(QtGui.QStyledItemDelegate):
         return editor
     
     def setEditorData(self, editor, index):
-        #value =  index.model().data(index, QtCore.Qt.EditRole).toInt()[0]
-        editor.setValue(self.minmax[2])
-        
-        
-        #else:
-        #    self.editor.setValue(self.value)
-        
+        model = index.model()
+        ind = model.createIndex(index.row(), index.column())
+        value = model.data(ind, QtCore.Qt.EditRole).toInt()[0]
+        if value == 0:
+            editor.setValue(self.minmax[2])
+        else:
+            editor.setValue(value)
+
+
     def setModelData(self, editor, model, index):
         value = editor.value()
         model.setData(index, value, QtCore.Qt.EditRole)
@@ -886,15 +895,18 @@ class LineEditDelegate(QtGui.QStyledItemDelegate):
         return editor
 
     def setEditorData(self, editor, index):
-        value = index.model().data(index, QtCore.Qt.EditRole).toString()
+        model = index.model()
+        ind = model.createIndex(index.row(), index.column())
+        value = odel.data(ind, QtCore.Qt.EditRole).toString()
+        
         editor.setText(value)
     
     def setModelData(self, editor, model, index):
         value = editor.text()
         model.setData(index, value, QtCore.Qt.EditRole)
 
-    def updateEditorGeometry(self, editor, option, index):
-        editor.setGeometry(option.rect)
+    #def updateEditorGeometry(self, editor, option, index):
+    #    editor.setGeometry(option.rect)
 
 
 class SpinBoxDelegate(QtGui.QStyledItemDelegate):
@@ -913,10 +925,13 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
         return editor
 
     def setEditorData(self, editor, index):
-        value = index.model().data(index, QtCore.Qt.EditRole).toInt()[0]
-        for i in index.model().dbdata:
+        model = index.model()
+        ind = model.createIndex(index.row(), index.column())
+        
+        value = model.data(ind, QtCore.Qt.EditRole).toInt()[0]
+        for i in model.dbdata:
             try:
-                val = i[index.column()].toInt()[0]
+                val = i[ind.column()].toInt()[0]
                 self.prev_values.append(val)
             except:
                 pass
@@ -943,13 +958,15 @@ class DateDelegate(QtGui.QStyledItemDelegate):
         #Сделать проверку входных значений.
         #если не подходит, то выставлять текущую
         #try:
-        value = index.model().data(index, QtCore.Qt.EditRole).toString()#[0]
+        model = index.model()
+        ind = model.createIndex(index.row(), index.column())
+        
+        value = model.data(ind, QtCore.Qt.EditRole).toString()#[0]
+        if str(value) != '':
         #except IndexError:
-        #    value = QtCore.QDate.currentDate()
-        #print value, QtCore.QDate.fromString(value, 'dd.MM.yyyy')
-        try:
             editor.setDate(QtCore.QDate.fromString(value, 'dd.MM.yyyy'))
-        except:
+        #print value, QtCore.QDate.fromString(value, 'dd.MM.yyyy')
+        else:
             editor.setDate(QtCore.QDate.currentDate())
 
     def setModelData(self, editor, model, index):
@@ -966,15 +983,25 @@ class TimeDelegate(QtGui.QStyledItemDelegate):
         return editor
 
     def setEditorData(self, editor, index):
+        model = index.model()
+        ind = model.createIndex(index.row(), index.column())
         #try:
-        value = index.model().data(index, QtCore.Qt.EditRole).toString()#[0]
+        value = model.data(ind, QtCore.Qt.EditRole).toString()#[0]
         #print value
         #except IndexError:
-        #    value = QtCore.QTime.currentTime()
-        #try:
-        editor.setTime(QtCore.QTime.fromString(value, 'hh:mm'))
-        #except:
-        #    editor.setTime(QtCore.QTime.currentTime())
+        if str(value) != '':
+        #if value == u'00:00':
+            editor.setTime(QtCore.QTime.fromString(value, 'hh:mm'))
+            
+        else:
+            value = QtCore.QTime.currentTime()
+            
+            editor.setTime(value)
+
+            
+            
+        
+            
             
     def setModelData(self, editor, model, index):
         value = editor.time()
@@ -997,7 +1024,9 @@ class ComboBoxDelegate(QtGui.QStyledItemDelegate):
         self.values.append(value)
 
     def setEditorData(self, comboBox, index):
-        value = index.model().data(index, QtCore.Qt.EditRole)#.toInt()[0]
+        model = index.model()
+        ind = model.createIndex(index.row(), index.column())
+        value = model.data(ind, QtCore.Qt.EditRole)#.toInt()[0]
         #self.values.insert(0, unicode(value.toString()))
         #comboBox.addItem(value.toString())
 
@@ -1016,12 +1045,12 @@ class ComboBoxDelegate(QtGui.QStyledItemDelegate):
         value = comboBox.currentText()
         model.setData(index, value, QtCore.Qt.EditRole)
     
-    #вот корень зла!
-    #def updateEditorData(self, comboBox, value):
-    #    comboBox.addItem(QtCore.QString(value))
+    #вот корень зла! а вот и нет!
+    def updateEditorData(self, comboBox, value):
+        comboBox.addItem(QtCore.QString(value))
         
-    #def updateEditorGeometry(self, editor, option, index):
-    #    self.comboBox.setGeometry(option.rect)
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
 
 
 class EditCommand(QtGui.QUndoCommand):
