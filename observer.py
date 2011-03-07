@@ -375,7 +375,7 @@ class MainView(QtGui.QMainWindow):
     
     #Инициализация главного окна
     def __init__(self, dbname, host, post, user, passwd, parent = None):
-        QtGui.QMainWindow.__init__(self, parent)
+        super(MainView, self).__init__()
         self.ui = MainWindow()
         self.ui.setupUi(self)
         self.undoStack = QtGui.QUndoStack(self)
@@ -821,9 +821,9 @@ class TableModel(QtCore.QAbstractTableModel):
 
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
-class FloatDelegate(QtGui.QItemDelegate):
+class FloatDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, val_range, parent = None):
-        QtGui.QItemDelegate.__init__(self, parent)
+        QtGui.QStyledItemDelegate.__init__(self, parent)
         self.minmax = val_range
     def createEditor(self, parent, option, index):
         editor = QtGui.QDoubleSpinBox(parent)
@@ -842,9 +842,9 @@ class FloatDelegate(QtGui.QItemDelegate):
         model.setData(index, value, QtCore.Qt.EditRole)
 
 
-class IntDelegate(QtGui.QItemDelegate):
-    def __init__(self, val_range, parent = None):
-        QtGui.QItemDelegate.__init__(self, parent)
+class IntDelegate(QtGui.QStyledItemDelegate):
+    def __init__(self, val_range, parent):
+        QtGui.QStyledItemDelegate.__init__(self, parent)
         self.minmax = val_range
 
     def createEditor(self, parent, option, index):
@@ -868,13 +868,13 @@ class IntDelegate(QtGui.QItemDelegate):
         model.setData(index, value, QtCore.Qt.EditRole)
         self.emit(QtCore.SIGNAL("dataAdded"), value)
 
-class LineEditDelegate(QtGui.QItemDelegate):
+class LineEditDelegate(QtGui.QStyledItemDelegate):
     #Этот делегат будет уметь фильтровать ввод
     #валидатор с параметрами будет передаваться
     #при создании экземпляра класса
 
     def __init__(self, parent = None, validator = None):
-        QtGui.QItemDelegate.__init__(self, parent)
+        QtGui.QStyledItemDelegate.__init__(self, parent)
         self.validator = validator
 
     def createEditor(self, parent, option, index):
@@ -895,13 +895,13 @@ class LineEditDelegate(QtGui.QItemDelegate):
         editor.setGeometry(option.rect)
 
 
-class SpinBoxDelegate(QtGui.QItemDelegate):
+class SpinBoxDelegate(QtGui.QStyledItemDelegate):
     #Приятная особенность - этот делегат будет проверять,
     #чтобы каждая следующая станция не имела бы номера,
     #равного предыдущему
 
     def __init__(self, parent = None):
-        QtGui.QItemDelegate.__init__(self, parent)
+        QtGui.QStyledItemDelegate.__init__(self, parent)
         self.prev_values = []
 
     def createEditor(self, parent, option, index):
@@ -928,9 +928,9 @@ class SpinBoxDelegate(QtGui.QItemDelegate):
             model.setData(index, value, QtCore.Qt.EditRole)
             self.emit(QtCore.SIGNAL("dataAdded"), value)
 
-class DateDelegate(QtGui.QItemDelegate):
+class DateDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, parent = None):
-        QtGui.QItemDelegate.__init__(self, parent)
+        QtGui.QStyledItemDelegate.__init__(self, parent)
         
     def createEditor(self, parent, option, index):
         editor = QtGui.QDateEdit(parent)
@@ -954,9 +954,9 @@ class DateDelegate(QtGui.QItemDelegate):
         value = editor.date()
         model.setData(index, u"%02d.%02d.%s" % (value.day(), value.month(), value.year()), QtCore.Qt.EditRole)
         
-class TimeDelegate(QtGui.QItemDelegate):
+class TimeDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, parent = None):
-        QtGui.QItemDelegate.__init__(self, parent)
+        QtGui.QStyledItemDelegate.__init__(self, parent)
 
     def createEditor(self, parent, option, index):
         editor = QtGui.QTimeEdit(parent)
@@ -978,9 +978,9 @@ class TimeDelegate(QtGui.QItemDelegate):
         value = editor.time()
         model.setData(index, u'%02d:%02d' % (value.hour(), value.minute()), QtCore.Qt.EditRole)
 
-class ComboBoxDelegate(QtGui.QItemDelegate):
+class ComboBoxDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, parent = None, validator = None):
-        QtGui.QItemDelegate.__init__(self, parent)
+        QtGui.QStyledItemDelegate.__init__(self, parent)
         
         self.validator = validator
         self.values = []
@@ -998,6 +998,7 @@ class ComboBoxDelegate(QtGui.QItemDelegate):
         value = index.model().data(index, QtCore.Qt.EditRole)#.toInt()[0]
         #self.values.insert(0, unicode(value.toString()))
         #comboBox.addItem(value.toString())
+
         #print unicode(value.toString())
         #print self.values.index(unicode(value.toString()))
         for i in self.values:
