@@ -435,6 +435,7 @@ class MainView(QtGui.QMainWindow):
         self.catchselectionModel = QtGui.QItemSelectionModel(self.ui.catchTableView.model())
         self.ui.catchTableView.setSelectionModel(self.catchselectionModel)
         self.ui.catchTableView.setSortingEnabled(True)
+        self.ui.catchTableView.resizeColumnsToContents()
         self.ui.catchTableView.setAlternatingRowColors(True)
         self.ui.catchTableView.verticalHeader().setDefaultSectionSize(20)
         self.connect(self.catchselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
@@ -444,6 +445,7 @@ class MainView(QtGui.QMainWindow):
         self.bioselectionModel = QtGui.QItemSelectionModel(self.ui.bioTableView.model())
         self.ui.bioTableView.setSelectionModel(self.bioselectionModel)
         self.ui.bioTableView.setSortingEnabled(True)
+        #self.ui.bioTableView.resizeColumnsToContents()
         self.ui.bioTableView.setAlternatingRowColors(True)
         self.ui.bioTableView.verticalHeader().setDefaultSectionSize(20)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
@@ -572,11 +574,27 @@ class MainView(QtGui.QMainWindow):
         #вид
         #speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         #self.ui.catchTableView.setItemDelegateForColumn(1, speciesDelegate)
-        #улов
+        #улов, вес
         self.commonCatchDelegate = IntDelegate([1, 100000, 1], self.ui.catchTableView.model())
         self.ui.catchTableView.setItemDelegateForColumn(2, self.commonCatchDelegate)
+        #коммерческий улов, вес
+        self.commCatchDelegate = IntDelegate([1, 100000, 1], self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(3, self.commCatchDelegate)
+        #вес пробы
+        self.sampleWeight = IntDelegate([1, 10000, 1], self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(4, self.sampleWeight)
+        #кол-во промысловых самцов, посмотреть 
+        self.commMales = IntDelegate([1, 100000, 100], self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(5, self.commMales)
+        #непромысловые самцы, кол-во - то же самое - узнать пределы
+        self.nonCommMales = IntDelegate([1, 100000, 100], self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(6, self.nonCommMales)
+        #самки - кол-во
+        self.females = IntDelegate([1, 100000, 100], self.ui.catchTableView.model())
+        self.ui.catchTableView.setItemDelegateForColumn(7, self.females)
         
 
+        #биоанализы
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
         #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
         #еще раз пишу - надо переделать модель!!! для всех!!!
@@ -589,6 +607,12 @@ class MainView(QtGui.QMainWindow):
         #self.connect(self.ui.tripForm.objectComboBox, hide_bio_columns)
         #
         
+        
+        #создание действий и клавиатурных сокращений.
+        #переключение между табами
+        self.connect(self.ui.prev_tab, QtCore.SIGNAL("triggered()"), self.rightTab)
+        self.connect(self.ui.next_tab, QtCore.SIGNAL("triggered()"), self.leftTab)
+
         #Показ формы настроек рейса и пр.
         self.connect(self.ui.setupaction, QtCore.SIGNAL('triggered()'), self.tripForm.show)
         self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), self.addStation)
@@ -599,6 +623,22 @@ class MainView(QtGui.QMainWindow):
         
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
 
+    def rightTab(self):
+        tab = self.ui.tabWidget.currentIndex()
+        
+        if tab > 0 and self.ui.tabWidget.isTabEnabled(tab - 1):
+            self.ui.tabWidget.setCurrentIndex(tab - 1)
+        else:
+            if self.ui.tabWidget.isTabEnabled(2):
+                self.ui.tabWidget.setCurrentIndex(2)
+
+    def leftTab(self):
+        tab = self.ui.tabWidget.currentIndex()
+        
+        if tab < 2 and self.ui.tabWidget.isTabEnabled(tab + 1):
+            self.ui.tabWidget.setCurrentIndex(tab + 1)
+        else:
+            self.ui.tabWidget.setCurrentIndex(0)
     def showTab(self):
         tab = self.ui.tabWidget.currentIndex()
         self.ui.tabWidget.setTabEnabled(tab+1, True)
