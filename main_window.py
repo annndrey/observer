@@ -141,6 +141,16 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.editmenu.menuAction())
         self.menubar.addAction(self.listmenu.menuAction())
 
+        #переключение между табами
+        self.prev_tab = QtGui.QAction(MainWindow)
+        self.next_tab = QtGui.QAction(MainWindow)
+        self.prev_tab.setObjectName('prev_tab')
+        self.next_tab.setObjectName('next_tab')
+        self.prev_tab.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+Left", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.addAction(self.prev_tab)
+        self.next_tab.setShortcut(QtGui.QApplication.translate("MainWindow", "Ctrl+Right", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.addAction(self.next_tab)
+
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
