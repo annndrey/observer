@@ -629,8 +629,8 @@ class MainView(QtGui.QMainWindow):
         if tab > 0 and self.ui.tabWidget.isTabEnabled(tab - 1):
             self.ui.tabWidget.setCurrentIndex(tab - 1)
         else:
-            if self.ui.tabWidget.isTabEnabled(2):
-                self.ui.tabWidget.setCurrentIndex(2)
+            if self.ui.tabWidget.isTabEnabled(self.ui.tabWidget.count() -1):
+                self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() -1)
 
     def leftTab(self):
         tab = self.ui.tabWidget.currentIndex()
