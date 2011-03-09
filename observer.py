@@ -219,64 +219,64 @@ bio_groups_dict = {'krill':u'криль',
 'squid':u'головоногие', 
 'echinoidea':u'ежи', 
 'crab':u'крабы', 
-'squid':u'головоногие', 
+'craboid':u'крабоиды', 
 'algae':u'водоросли', 
 'golotur':u'голотурии', 
 'molusk':u'брюхоногие', 
 'pelecipoda':u'двустворчатые'}
 
-bio_headers = [u'высота раковины',
-u'общий вес',
-u'год',
-u'вес',
-u'длина раковины', 
-u'стадия зрелости яичника', 
+bio_headers = [
+#общее для всех
+u'номер станции', 
 u'номер особи', 
-u'пол', 
-u'вес кожно-мускульного мешка', 
-u'комментарий', 
-u'вес гонады', 
-u'стадия развития гонады', 
-u'стадия петазмы', 
-u'состояние половых отверстий', 
-u'повреждения ног', 
-u'промысловая длина тела', 
-u'стадия теликума', 
-u'стернальные шипы', 
-u'метка', 
-u'цвет гонад', 
-u'линочная стадия', 
-u'номер страты',
 u'вид', 
-u'икра', 
-u'диаметр тела', 
-u'гонадный индекс', 
-u'наполнение желудка', 
+#крабы и крабоиды
+u'ширина карапакса', 
+u'длина карапакса', 
 u'высота клешни', 
-u'состояние сперматофоров', 
-u'наличие шарика спермы', 
-u'стадия зрелости', 
-u'судно', 
-u'подстадия зрелости', 
+u'линочная стадия', 
+u'пол', 
+u'стадия зрелости',
+u'икра', 
+u'вес',
+u'повреждения ног', 
+u'метка', 
+u'заболевание', 
+#креветки
+u'промысловая длина карапакса',
+u'стадия развития гонады', 
+u'стернальные шипы', 
+#моллюски блюхоногие и двустворки?
+u'высота раковины',
+u'длина раковины', 
+u'ширина раковины', 
+u'вес кожно-мускульного мешка', 
+u'вес мускула', 
+#головоногие
+u'возраст', 
+u'стадия зрелости яичника', 
+u'наполнение желудка', 
+u'общий вес',
+u'вес тела', 
+u'вес гонады', 
+#иглокожие
+u'диаметр панциря', 
 u'высота панциря', 
 u'вес гонад', 
-u'вес тела', 
-u'номер станции', 
-u'ширина раковины', 
-u'наблюдатель', 
-u'стадия зрелости', 
-u'ширина карапакса', 
-u'комментарий', 
-u'возраст', 
-u'номер рейса', 
-u'комментарий', 
+u'цвет гонад', 
+u'гонадный индекс', 
+#криль
+u'подстадия зрелости', 
+u'стадия петазмы', 
+u'стадия теликума', 
+u'состояние сперматофоров', 
+u'состояние половых отверстий', 
+u'наличие шарика спермы', 
 u'состояние ампул', 
-u'длина карапакса', 
-u'комментарий', 
-u'заболевание', 
-u'вес мускула', 
 u'форма сперматофоров', 
-u'следы спаривания']
+u'следы спаривания',
+u'комментарий', 
+]
 
 bio_headers_dict = {'shellheight':u'высота раковины', 
 'bodywght':u'общий вес', 
@@ -293,7 +293,7 @@ bio_headers_dict = {'shellheight':u'высота раковины',
 'stagepetasma':u'стадия петазмы', 
 'condgenapert':u'состояние половых отверстий', 
 'leglost':u'повреждения ног', 
-'mlength':u'промысловая длина тела', 
+'mlength':u'промысловая длина карапакса', 
 'stagetelicum':u'стадия теликума', 
 'sternal':u'стернальные шипы', 
 'label':u'метка', 
@@ -348,9 +348,20 @@ u'комбинированная':[],
 }
 
 #в уловах скрывать ничего не надо
-catch_hide_columns = []
+catch_hide_columns = {}
 
-bio_hide_columns = []
+bio_hide_columns = {
+'krill':[],
+'krevet':[],
+'squid':[],
+'echinoidea':[],
+'crab':[],
+'craboid':[],
+'algae':[],
+'golotur':[],
+'molusk':[],
+'pelecipoda':[],
+}
 
 column_names_query = """select column_name from information_schema.columns where table_name ilike '%%%s'"""
 
@@ -382,7 +393,8 @@ class MainView(QtGui.QMainWindow):
 
         self.conn = psycopg2.connect("dbname='%s' user='%s' host='%s' port=%d  password='%s'" % (dbname, user, host, port, passwd))
         self.cur = self.conn.cursor()
-        self.stations = []
+        self.stations = [1, ]
+        self.sp_num = 1
         #форма настроек рейса
         self.tripForm = TripForm(self)
         
@@ -441,11 +453,14 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.catchselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
 
         #биоанализы
-        self.ui.bioTableView.setModel(TableModel([range(1,len(bio_headers_dict)), bio_headers_dict.values(), bio_headers_dict.keys()], bio_headers_dict.values(), self.undoStack, self.conn, self.statusBar, bio_headers_dict.keys(), self))
+        init_list = []
+        for i in xrange(len(bio_headers)):
+            init_list.append('')
+        self.ui.bioTableView.setModel(TableModel([init_list, ], bio_headers, self.undoStack, self.conn, self.statusBar, bio_headers, self))
         self.bioselectionModel = QtGui.QItemSelectionModel(self.ui.bioTableView.model())
         self.ui.bioTableView.setSelectionModel(self.bioselectionModel)
         self.ui.bioTableView.setSortingEnabled(True)
-        #self.ui.bioTableView.resizeColumnsToContents()
+        self.ui.bioTableView.resizeColumnsToContents()
         self.ui.bioTableView.setAlternatingRowColors(True)
         self.ui.bioTableView.verticalHeader().setDefaultSectionSize(20)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
@@ -469,7 +484,9 @@ class MainView(QtGui.QMainWindow):
 
         #станции
         self.spindelegate0 = SpinBoxDelegate(self.ui.stationsTableView.model())
+        self.spindelegate0.values = self.stations
         self.spindelegate1 = SpinBoxDelegate(self.ui.stationsTableView.model())
+        self.spindelegate1.values = self.stations
         self.ui.stationsTableView.setItemDelegateForColumn(0, self.spindelegate0)
         self.ui.stationsTableView.setItemDelegateForColumn(1, self.spindelegate1)
         #delegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
@@ -596,9 +613,79 @@ class MainView(QtGui.QMainWindow):
 
         #биоанализы
         #Потом, в зависимости от вида, прятать те или иные колонки. Отображаться колонки будут для того вида, который в настоящий момент 
-        #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. Поэтому
-        #еще раз пишу - надо переделать модель!!! для всех!!!
+        #выбран. Прописано это поведение будет прямо в модели. То же самое придется делать и для станций и для уловов. 
+                
+        #станции
+        self.bioStDelegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+        self.bioStDelegate.values = self.stations
+        self.ui.bioTableView.setItemDelegateForColumn(0, self.bioStDelegate)
+        #номер особи
+        self.specimenNumDelegate = SpinBoxDelegate(self.ui.bioTableView.model())
+        self.specimenNumDelegate.values = self.stations
+        #self.specimenNumDelegate
+        self.ui.bioTableView.setItemDelegateForColumn(1, self.specimenNumDelegate)
+        #вид
+        self.speciesBioDelegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+        self.cur.execute("""select distinct namerus, namelat, grup from species_spr order by grup asc""")
+        for i in xrange(self.cur.rowcount):
+            try:
+                species = self.cur.fetchone()
+                self.speciesBioDelegate.addValue(u'%s (%s)' % (species[0].decode('utf-8'), species[1].decode('utf-8')))
+            except TypeError:
+                pass
+        self.ui.bioTableView.setItemDelegateForColumn(2, self.speciesBioDelegate)
+        #ширина карапакса
+        self.carWidthDelegate = IntDelegate([1, 1000, 90], self.ui.bioTableView.model())
+        self.ui.bioTableView.setItemDelegateForColumn(3, self.carWidthDelegate)
+        #длина карапакса
+        self.carLengthDelegate = IntDelegate([1, 1000, 90], self.ui.bioTableView.model())
+        self.ui.bioTableView.setItemDelegateForColumn(4, self.carLengthDelegate)
+        #высота клешни
+        self.clawHeightDelegate = IntDelegate([1, 100, 10], self.ui.bioTableView.model())
+        self.ui.bioTableView.setItemDelegateForColumn(5, self.clawHeightDelegate)
+        #линочная стадия - зависит от вида!
+        self.moltStDelegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
 
+        #пол - зависит от вида!
+        self.sexDelegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+        
+        #стадия зрелости - зависит от вида
+        self.matureStage = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+
+        #стадия зрелости икры
+        self.roeStage = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+
+        #вес 
+        self.weightDelegate = IntDelegate([1, 100000, 1000], self.ui.bioTableView.model())
+        self.ui.bioTableView.setItemDelegateForColumn(10, self.weightDelegate)
+        
+        #повреждения ног - зависит от вида. Придумать делегат для заполнения
+        #self.legDamage = 
+        
+        #метка - текст
+        #self.labelDelegate = 
+        
+        #заболевание
+        self.diseaseDelegate = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+        self.cur.execute("select distinct name from illness_spr order by name asc")
+        for i in xrange(self.cur.rowcount):
+            try:
+                disease = self.cur.fetchone()
+                self.diseaseDelegate.addValue(disease[0].decode('utf-8'))
+            except TypeError:
+                pass
+        self.ui.bioTableView.setItemDelegateForColumn(13, self.diseaseDelegate)
+
+        #промысловая длина карапакса - для креветок
+        self.commercCarLength = IntDelegate([1, 500, 40], self.ui.bioTableView.model())
+        self.ui.bioTableView.setItemDelegateForColumn(14, self.commercCarLength)
+        
+        #стадия развития гонады
+        self.gonadeStage = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+        
+        #стернальные шипы
+        self.sternalSpines = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+        
 
         #self.connect(self.ui.tripForm.buttonBox, accepted, change_view)
         #change_view -> change stations, change_catch, change_bio
@@ -618,10 +705,28 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), self.addStation)
         self.connect(self.tripForm.ui.buttonBox, QtCore.SIGNAL('accepted()'), self.applyChanges)
         self.connect(self.spindelegate0, QtCore.SIGNAL('dataAdded'), self.showTab)
+        #self.connect(self.specimenNumDelegate, QtCore.SIGNAL('dataAdded'), self.addNum)
         #если хотя бы один улов добавлен и не равен 0, то показать биоанализы
         self.connect(self.commonCatchDelegate, QtCore.SIGNAL('dataAdded'), self.showTab)
+        self.connect(self.speciesBioDelegate, QtCore.SIGNAL('dataChanged'), self.test)
         
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
+
+    def showBioCols(self):
+        cols_to_hide = []
+        cols_to_show = []
+        #узнаем группу, к которой относится вид
+        #sp = 
+        #self.cur.execute
+        for i in bio_hide_columns.keys():
+                if i != unicode(self.tripForm.ui.surveycomboBox.currentText()):
+                    for j in stations_hide_columns[i]:
+                        cols_to_hide.append(j)
+                else:
+                    for j in stations_hide_columns[i]:
+                        cols_to_show.append(j)
+        self.hideColumns(self.ui.stationsTableView, cols_to_hide)
+        self.showColumns(self.ui.stationsTableView, cols_to_show)
 
     def rightTab(self):
         tab = self.ui.tabWidget.currentIndex()
@@ -643,8 +748,8 @@ class MainView(QtGui.QMainWindow):
         tab = self.ui.tabWidget.currentIndex()
         self.ui.tabWidget.setTabEnabled(tab+1, True)
 
-    def test(self):
-        print 'OK'
+    def test(self, data):
+        print unicode(data)
 
     def addStation(self, data):
         self.stations.append(data)
@@ -718,6 +823,7 @@ class MainView(QtGui.QMainWindow):
         sp_obj = unicode(self.tripForm.ui.objectComboBox.currentText())
         sp_obj = objects_dict.keys()[objects_dict.values().index(sp_obj)]
 
+        
         self.cur.execute("""select distinct namerus, namelat from species_spr where grup = '%s' order by namerus asc""" % sp_obj)
         for i in xrange(self.cur.rowcount):
             
@@ -725,6 +831,7 @@ class MainView(QtGui.QMainWindow):
                 #print unicode(self.cur.fetchone()[0].decode('utf-8'))
                 species = self.cur.fetchone()
                 speciesDelegate.addValue(u'%s (%s)' % (species[0].decode('utf-8'), species[1].decode('utf-8')))
+                
             except TypeError:
                 pass
             #speciesDelegate.addValue(u'')
@@ -957,6 +1064,7 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, parent = None):
         QtGui.QStyledItemDelegate.__init__(self, parent)
         self.prev_values = []
+        self.values = [1, ]
 
     def createEditor(self, parent, option, index):
         editor = QtGui.QSpinBox(parent)
@@ -978,6 +1086,8 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
                         
         if value not in self.prev_values:
             editor.setValue(value)
+        else:
+            editor.setValue(max(self.values) + 1)
 
     def setModelData(self, editor, model, index):
         value = editor.value()
@@ -1084,7 +1194,7 @@ class ComboBoxDelegate(QtGui.QStyledItemDelegate):
     def setModelData(self, comboBox, model, index):
         value = comboBox.currentText()
         model.setData(index, value, QtCore.Qt.EditRole)
-    
+        self.emit(QtCore.SIGNAL('dataChanged'), value)
     #вот корень зла! а вот и нет!
     def updateEditorData(self, comboBox, value):
         comboBox.addItem(QtCore.QString(value))
