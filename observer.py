@@ -351,16 +351,75 @@ u'комбинированная':[],
 catch_hide_columns = {}
 
 bio_hide_columns = {
-'krill':[],
-'krevet':[],
-'squid':[],
-'echinoidea':[],
-'crab':[],
-'craboid':[],
+'krill':[u'подстадия зрелости',
+u'стадия петазмы',
+u'стадия теликума',
+u'состояние сперматофоров',
+u'состояние половых отверстий',
+u'наличие шарика спермы',
+u'состояние ампул',
+u'форма сперматофоров',
+u'следы спаривания',
+],
+'krevet':[u'промысловая длина карапакса',
+u'длина карапакса',
+u'ширина карапакса',
+u'стадия развития гонады',
+u'стернальные шипы',],
+'squid':[u'возраст',
+u'стадия зрелости яичника',
+u'наполнение желудка',
+u'общий вес',
+u'вес тела',
+u'вес гонады',
+],
+'echinoidea':[u'диаметр панциря',
+u'высота панциря',
+u'вес гонад',
+u'цвет гонад',
+u'гонадный индекс',],
+'crab':[u'ширина карапакса',
+u'длина карапакса',
+u'высота клешни',
+u'линочная стадия',
+u'пол',
+u'стадия зрелости',
+u'икра',
+u'вес',
+u'повреждения ног',
+u'метка',
+u'заболевание',],
+'craboid':[u'ширина карапакса',
+u'длина карапакса',
+u'высота клешни',
+u'линочная стадия',
+u'пол',
+u'стадия зрелости',
+u'икра',
+u'вес',
+u'повреждения ног',
+u'метка',
+u'заболевание',],
 'algae':[],
-'golotur':[],
-'molusk':[],
-'pelecipoda':[],
+u'golotur':[],
+'molusk':[u'высота раковины',
+u'длина раковины',
+u'ширина раковины',
+u'вес кожно-мускульного мешка',
+u'вес мускула',
+],
+'pelecipoda':[u'высота раковины',
+u'длина раковины',
+u'ширина раковины',
+u'вес кожно-мускульного мешка',
+u'вес мускула',
+],
+'squid':[u'возраст',
+u'стадия зрелости яичника',
+u'наполнение желудка',
+u'общий вес',
+u'вес тела',
+u'вес гонады',],
 }
 
 column_names_query = """select column_name from information_schema.columns where table_name ilike '%%%s'"""
@@ -464,7 +523,7 @@ class MainView(QtGui.QMainWindow):
         self.ui.bioTableView.setAlternatingRowColors(True)
         self.ui.bioTableView.verticalHeader().setDefaultSectionSize(20)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.appendRow)
-
+        
         #скрытие колонок
         #cols_to_hide = []
         #for i in stations_hide_columns.keys():
@@ -708,25 +767,37 @@ class MainView(QtGui.QMainWindow):
         #self.connect(self.specimenNumDelegate, QtCore.SIGNAL('dataAdded'), self.addNum)
         #если хотя бы один улов добавлен и не равен 0, то показать биоанализы
         self.connect(self.commonCatchDelegate, QtCore.SIGNAL('dataAdded'), self.showTab)
-        self.connect(self.speciesBioDelegate, QtCore.SIGNAL('dataChanged'), self.test)
-        
+        self.connect(self.speciesBioDelegate, QtCore.SIGNAL('dataChanged'), self.showBioCols)
+        self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.showBioCols)
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
 
-    def showBioCols(self):
-        cols_to_hide = []
-        cols_to_show = []
+    def showBioCols(self, *args):
+        if len(args) == 2:
+            index = args[0]
+            ind = self.ui.bioTableView.model().createIndex(index.row(), 2)
+            species = unicode(self.ui.bioTableView.model().data(ind, QtCore.Qt.EditRole).toString())
+        elif len(args) == 1:
+            species = unicode(args[0])
+        
+        if len(species) > 1:
+            specimen = unicode(species).split(' (')[0].replace(')', '')
+
+            cols_to_hide = []
+            cols_to_show = []
         #узнаем группу, к которой относится вид
-        #sp = 
-        #self.cur.execute
-        for i in bio_hide_columns.keys():
-                if i != unicode(self.tripForm.ui.surveycomboBox.currentText()):
-                    for j in stations_hide_columns[i]:
-                        cols_to_hide.append(j)
+            #ищем русское название, иначе получается ошибка из-за 
+            #дополнительных скобок, как, например, в Креветка северная (атлантический подвид) (Pandalus borealis eous)
+            self.cur.execute(u"""select grup from species_spr where namerus ilike '%%%s%%'""" % specimen)
+            group = self.cur.fetchone()[0]
+            for i in bio_hide_columns.keys():
+                if i != group:
+                    for j in bio_hide_columns[i]:
+                        cols_to_hide.append(bio_headers.index(j))
                 else:
-                    for j in stations_hide_columns[i]:
-                        cols_to_show.append(j)
-        self.hideColumns(self.ui.stationsTableView, cols_to_hide)
-        self.showColumns(self.ui.stationsTableView, cols_to_show)
+                    for j in bio_hide_columns[i]:
+                        cols_to_show.append(bio_headers.index(j))
+            self.hideColumns(self.ui.bioTableView, cols_to_hide)
+            self.showColumns(self.ui.bioTableView, cols_to_show)
 
     def rightTab(self):
         tab = self.ui.tabWidget.currentIndex()
@@ -748,8 +819,8 @@ class MainView(QtGui.QMainWindow):
         tab = self.ui.tabWidget.currentIndex()
         self.ui.tabWidget.setTabEnabled(tab+1, True)
 
-    def test(self, data):
-        print unicode(data)
+    def test(self, data, prev):
+        print type(data)
 
     def addStation(self, data):
         self.stations.append(data)
