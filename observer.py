@@ -1115,7 +1115,7 @@ class LineEditDelegate(QtGui.QStyledItemDelegate):
     def setEditorData(self, editor, index):
         model = index.model()
         ind = model.createIndex(index.row(), index.column())
-        value = odel.data(ind, QtCore.Qt.EditRole).toString()
+        value = model.data(ind, QtCore.Qt.EditRole).toString()
         
         editor.setText(value)
     
