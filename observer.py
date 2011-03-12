@@ -740,7 +740,9 @@ class MainView(QtGui.QMainWindow):
         self.ui.bioTableView.setItemDelegateForColumn(14, self.commercCarLength)
         
         #стадия развития гонады
-        self.gonadeStage = ComboBoxDelegate(parent = self.ui.bioTableView.model())
+        self.gonadeStage = LineEditDelegate(parent = self.ui.bioTableView.model())
+
+        self.ui.bioTableView.setItemDelegateForColumn(15, self.gonadeStage)
         
         #стернальные шипы
         self.sternalSpines = ComboBoxDelegate(parent = self.ui.bioTableView.model())
@@ -1109,7 +1111,7 @@ class LineEditDelegate(QtGui.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QtGui.QLineEdit(parent)
         validator = self.validator
-        editor.setValidator(validator)
+        editor.setInputMask(QtCore.QString('179.59.99\N'))
         return editor
 
     def setEditorData(self, editor, index):
