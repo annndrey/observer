@@ -554,11 +554,12 @@ class MainView(QtGui.QMainWindow):
         #координаты - широта и долгота. Широта - 0-90, долгота - 0-180. 
         latRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
         lonRegexp = QtCore.QRegExp(r'[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
-        coordRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[NS]{1};[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[EW]{1}')
-        coordvalidator = QtGui.QRegExpValidator(coordRegexp, self)
-        coordMask = QtCore.QString('000.00.00>A-00.00.00>A;0')
-        coordBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator, mask = coordMask)
-        coordEndDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator, mask = coordMask)
+        coordRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[NS]{1}:[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[EW]{1}')
+        coordvalidator = CoordValidator(coordRegexp, self)
+        #coordMask = QtCore.QString('0DD.DD.DD>A:DD.DD.DD>A;0')
+        #с использованием маски ввода - пока не работает ((((
+	coordBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)#, mask = coordMask)
+        coordEndDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)#, mask = coordMask)
         self.ui.stationsTableView.setItemDelegateForColumn(12, coordBegDelegate)
         self.ui.stationsTableView.setItemDelegateForColumn(13, coordEndDelegate)
         
@@ -1109,12 +1110,14 @@ class LineEditDelegate(QtGui.QStyledItemDelegate):
         QtGui.QStyledItemDelegate.__init__(self, parent)
         self.validator = validator
         self.mask = mask
+
     def createEditor(self, parent, option, index):
         editor = QtGui.QLineEdit(parent)
         validator = self.validator
-        editor.setInputMask(self.mask)
-        editor.setValidator(validator)
-        #
+	editor.setValidator(validator)
+        if self.mask is not None:
+            editor.setInputMask(self.mask)
+
         return editor
 
     def setEditorData(self, editor, index):
@@ -1279,6 +1282,26 @@ class ComboBoxDelegate(QtGui.QStyledItemDelegate):
         editor.setGeometry(option.rect)
 
 
+class CoordValidator(QtGui.QRegExpValidator):
+	#наследуем валидатор, чтобы исправлять значения координат	
+	def __init__(self, regexp, parent = None):
+	    QtGui.QRegExpValidator.__init__(self, regexp, parent)
+            self.regexp = regexp
+
+	#def fixup(self, inp):
+        #    inp.replace(',', '1')
+
+        #def validate(self, inp, pos):
+            
+            #if ',' in inp:
+            #    return (QtGui.QValidator.Invalid, pos)
+            #elif '9' in inp:
+            #    return (QtGui.QValidator.Intermediate, pos)
+            #else:
+        #    if self.regexp.indexIn(inp):
+        #        print self.regexp.indexIn(inp)
+        #        return (QtGui.QValidator.Acceptable, pos)
+        
 class EditCommand(QtGui.QUndoCommand):
     def __init__(self, tablemodel, row, column, columns, prev_value, value, cursor, description):
         super(EditCommand, self).__init__(description)
