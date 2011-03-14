@@ -556,8 +556,9 @@ class MainView(QtGui.QMainWindow):
         lonRegexp = QtCore.QRegExp(r'[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
         coordRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[NS]{1};[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[EW]{1}')
         coordvalidator = QtGui.QRegExpValidator(coordRegexp, self)
-        coordBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)
-        coordEndDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)
+        coordMask = QtCore.QString('000.00.00>A-00.00.00>A;0')
+        coordBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator, mask = coordMask)
+        coordEndDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator, mask = coordMask)
         self.ui.stationsTableView.setItemDelegateForColumn(12, coordBegDelegate)
         self.ui.stationsTableView.setItemDelegateForColumn(13, coordEndDelegate)
         
@@ -1104,14 +1105,16 @@ class LineEditDelegate(QtGui.QStyledItemDelegate):
     #валидатор с параметрами будет передаваться
     #при создании экземпляра класса
 
-    def __init__(self, parent = None, validator = None):
+    def __init__(self, parent = None, validator = None, mask = None):
         QtGui.QStyledItemDelegate.__init__(self, parent)
         self.validator = validator
-
+        self.mask = mask
     def createEditor(self, parent, option, index):
         editor = QtGui.QLineEdit(parent)
         validator = self.validator
-        editor.setInputMask(QtCore.QString('179.59.99\N'))
+        editor.setInputMask(self.mask)
+        editor.setValidator(validator)
+        #
         return editor
 
     def setEditorData(self, editor, index):
