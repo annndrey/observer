@@ -66,8 +66,10 @@ u'скорость траления, узл.',
 u'глубина траления',
 u'длина ваеров',
 u'грунт', 
-u'координаты начала', 
-u'координаты конца', 
+u'широта начала',
+u'долгота начала',
+u'широта конца', 
+u'долгота конца',
 #u'орудие лова', 
 u'ячея', 
 u'расстояние между ловушками', 
@@ -94,8 +96,10 @@ station_headers_dict = {'stations.numstn':u'станция',
 'stations.depthtral':u'глубина траления',
 'stations.wirelength':u'длина ваеров',
 'grunt_spr.name':u'грунт', 
-'stations.latgradbeg, stations.latminbeg, stations.longradbeg, stations.lonminbeg':u'координаты начала', 
-'stations.latgradend, stations.latminend, stations.longradend, stations.lonminend':u'координаты конца', 
+'stations.latgradbeg, stations.latminbeg':u'широта начала',
+ 'stations.longradbeg, stations.lonminbeg':u'долгота начала',
+'stations.latgradend, stations.latminend':u'широта конца',
+'stations.longradend, stations.lonminend':u'долгота конца', 
 #'gearcode':u'орудие лова', 
 'stations.cell':u'ячея', 
 'stations.trapdist':u'расстояние между ловушками', 
@@ -552,17 +556,21 @@ class MainView(QtGui.QMainWindow):
         #self.ui.bioTableView.setItemDelegateForColumn(0, delegate)
 
         #координаты - широта и долгота. Широта - 0-90, долгота - 0-180. 
-        latRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
-        lonRegexp = QtCore.QRegExp(r'[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
+        latRegexp = QtCore.QRegExp(r'[N|S][\ |1]?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
+        lonRegexp = QtCore.QRegExp(r'[E|W][0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}')
         coordRegexp = QtCore.QRegExp(r'1?[0-8]{2}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[NS]{1}:[0-8]{1}[0-9]{1}\.[0-5]{1}[0-9]{1}\.[0-9]{2}[EW]{1}')
-        coordvalidator = CoordValidator(coordRegexp, self)
-        #coordMask = QtCore.QString('0DD.DD.DD>A:DD.DD.DD>A;0')
+        latvalidator = CoordValidator(latRegexp, self)
+        lonvalidator = CoordValidator(lonRegexp, self)
+
+        latMask = QtCore.QString("""a0DD.DD.DD;""")
+        lonMask = QtCore.QString("""aDD.DD.DD""")
         #с использованием маски ввода - пока не работает ((((
-	coordBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)#, mask = coordMask)
-        coordEndDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = coordvalidator)#, mask = coordMask)
-        self.ui.stationsTableView.setItemDelegateForColumn(12, coordBegDelegate)
-        self.ui.stationsTableView.setItemDelegateForColumn(13, coordEndDelegate)
-        
+	latBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = latvalidator, mask = latMask)
+        lonBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = lonvalidator, mask = lonMask)
+        self.ui.stationsTableView.setItemDelegateForColumn(12, latBegDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(13, lonBegDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(14, latBegDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(15, lonBegDelegate)
         #дата начала
         dateBegDelegate = DateDelegate(self.ui.stationsTableView.model())
         self.ui.stationsTableView.setItemDelegateForColumn(2, dateBegDelegate)
@@ -609,40 +617,40 @@ class MainView(QtGui.QMainWindow):
         
         #ячея
         cellDelegate = IntDelegate([1, 1000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(14, cellDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(16, cellDelegate)
         #расстояние между ловушками
         trapdistDelegate = IntDelegate([1, 1000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(15, trapdistDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(17, trapdistDelegate)
         #количество ловушек
         trapnumDelegate = IntDelegate([1, 10000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(16, trapnumDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(18, trapnumDelegate)
         #кол-во обработанных ловушек
         trapprocessedDelegate = IntDelegate([0, 10000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(17, trapprocessedDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(19, trapprocessedDelegate)
         #вес пробы
         sampleWeightDelegate = IntDelegate([0, 10000, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(18, sampleWeightDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(20, sampleWeightDelegate)
         #давление воздуха min и max - отсюда [http://meteoclub.ru/index.php?action=vthread&topic=922]
         pressDelegate = IntDelegate([880, 1134, 1013], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(19, pressDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(21, pressDelegate)
         #температура воздуха
         temperDelegate = IntDelegate([-89, 60, 22], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(20, temperDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(22, temperDelegate)
         #скорость ветра
         windSpeedDelegate = IntDelegate([0, 50, 3], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(21, windSpeedDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(23, windSpeedDelegate)
         #направление ветра, румбы. Румб - 1/32 окружности
         windDirectDelegate = IntDelegate([1, 32, 17], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(22, windDirectDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(24, windDirectDelegate)
         #волнение моря, баллы 0-9
         seaSurfDelegate = IntDelegate([0, 9, 1], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(23, seaSurfDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(25, seaSurfDelegate)
         #температура воды
         seaTempDelegate = IntDelegate([-4, 45, 10], self.ui.stationsTableView.model())  
-        self.ui.stationsTableView.setItemDelegateForColumn(24, seaTempDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(26, seaTempDelegate)
         #температура у дна
         bottomTempDelegate = IntDelegate([-6, 45, 4], self.ui.stationsTableView.model())
-        self.ui.stationsTableView.setItemDelegateForColumn(25, bottomTempDelegate)
+        self.ui.stationsTableView.setItemDelegateForColumn(27, bottomTempDelegate)
         
         #Делегаты для уловов
         #станция
@@ -1114,10 +1122,11 @@ class LineEditDelegate(QtGui.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QtGui.QLineEdit(parent)
         validator = self.validator
-	editor.setValidator(validator)
+
         if self.mask is not None:
             editor.setInputMask(self.mask)
 
+        editor.setValidator(validator)
         return editor
 
     def setEditorData(self, editor, index):
@@ -1288,19 +1297,17 @@ class CoordValidator(QtGui.QRegExpValidator):
 	    QtGui.QRegExpValidator.__init__(self, regexp, parent)
             self.regexp = regexp
 
-	#def fixup(self, inp):
-        #    inp.replace(',', '1')
-
-        #def validate(self, inp, pos):
+	def fixup(self, inp):
+            inp.replace('-', 'S')
             
-            #if ',' in inp:
-            #    return (QtGui.QValidator.Invalid, pos)
-            #elif '9' in inp:
-            #    return (QtGui.QValidator.Intermediate, pos)
-            #else:
-        #    if self.regexp.indexIn(inp):
-        #        print self.regexp.indexIn(inp)
-        #        return (QtGui.QValidator.Acceptable, pos)
+        def validate(self, inp, pos):
+            print inp, pos, self.regexp.indexIn(inp)
+            if self.regexp.indexIn(inp) == -1:
+                #if inp.length() > 8:
+                #    inp.replace(' ', '')
+                #    return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, pos)
+            return (QtGui.QValidator.Acceptable, pos)
         
 class EditCommand(QtGui.QUndoCommand):
     def __init__(self, tablemodel, row, column, columns, prev_value, value, cursor, description):
