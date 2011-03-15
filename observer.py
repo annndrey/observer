@@ -26,8 +26,6 @@ passwd = 'andreygon'
 
 #надо добавить год, судно, номер рейса, наблюдатель в станции и уловы и сделать их нередактируемыми. 
 
-
-
 #получение списка колонок для каждой группы видов
 #species_columns = select column_name from information_schema.columns where table_name like '%[bio_group]';
 
@@ -306,7 +304,7 @@ bio_headers_dict = {'shellheight':u'высота раковины',
 'numstrat':u'номер страты', 
 'speciescode':u'вид', 
 'eggs':u'икра', 
-'bodydiametr':u'диаметр тела', 
+'bodydiametr':u'диаметр панциря', 
 'gonadindex':u'гонадный индекс', 
 'stomach':u'наполнение желудка', 
 'clawhight':u'высота клешни', 
@@ -476,18 +474,7 @@ class MainView(QtGui.QMainWindow):
                 pass
 
         #станции
-        #Из TripForm надо брать year, survey_type, survey_number, vessel_code.
-        #потом select from stations where year, survey_type, survey_number, vessel_code
-        #                  catch
-        #                  bio
-        
-            
-        
         #Исходная пустая строка для станций
-
-        #Первоначатьный запрос для получения первичных данных
-        
-
         init_list = []
         for i in xrange(len(station_headers)):
             init_list.append('')
@@ -536,9 +523,8 @@ class MainView(QtGui.QMainWindow):
         #            cols_to_hide.append(j)
         #self.hideColumns(self.ui.stationsTableView, cols_to_hide)
         #применение настроек из формы настройки рейса
-        #оно стоит тут, т.к. иначе оно срабатывает после того, как создаются делегаты
-        #и при попытке что-то сделать программа умирает с сообщением о SegmentationFault...
-        self.applyChanges()
+        
+        
 
         self.ui.tabWidget.setTabEnabled(1, False)
         self.ui.tabWidget.setTabEnabled(2, False)
@@ -565,8 +551,8 @@ class MainView(QtGui.QMainWindow):
         latMask = QtCore.QString("""a0DD.DD.DD;""")
         lonMask = QtCore.QString("""aDD.DD.DD""")
         #с использованием маски ввода - пока не работает ((((
-	latBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = latvalidator, mask = latMask)
-        lonBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = lonvalidator, mask = lonMask)
+	latBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = latvalidator)#, mask = latMask)
+        lonBegDelegate = LineEditDelegate(parent = self.ui.stationsTableView.model(), validator = lonvalidator)#, mask = lonMask)
         self.ui.stationsTableView.setItemDelegateForColumn(12, latBegDelegate)
         self.ui.stationsTableView.setItemDelegateForColumn(13, lonBegDelegate)
         self.ui.stationsTableView.setItemDelegateForColumn(14, latBegDelegate)
@@ -764,7 +750,7 @@ class MainView(QtGui.QMainWindow):
         #self.connect(self.ui.tripForm.surveycomboBox, hide_station_columns)
         #self.connect(self.ui.tripForm.objectComboBox, hide_bio_columns)
         #
-        
+        self.applyChanges()
         
         #создание действий и клавиатурных сокращений.
         #переключение между табами
@@ -827,9 +813,15 @@ class MainView(QtGui.QMainWindow):
             self.ui.tabWidget.setCurrentIndex(tab + 1)
         else:
             self.ui.tabWidget.setCurrentIndex(0)
-    def showTab(self):
-        tab = self.ui.tabWidget.currentIndex()
-        self.ui.tabWidget.setTabEnabled(tab+1, True)
+
+    def showTab(self, *args):
+        
+        if len(args) == 0:
+            tab=0
+            self.ui.tabWidget.setTabEnabled(tab+2, True)
+        else:
+            tab = self.ui.tabWidget.currentIndex()
+            self.ui.tabWidget.setTabEnabled(tab+1, True)
 
     def test(self, data, prev):
         print type(data)
@@ -870,15 +862,24 @@ class MainView(QtGui.QMainWindow):
         for row in self.cur.fetchall():
             
             row = list(row)
-            start_coord = '.'.join(map(str, row[12:16]))
-            end_coord = '.'.join(map(str, row[16:20]))
+            #исправление кординат
+            start_coord_lat = '%s%02d.%02.2f' % (('N' if row[12] > 0 else 'S'), abs(row[12]), row[13])
+            start_coord_lon = '%s%03d.%02.2f' % (('E' if row[14] > 0 else 'W'), abs(row[14]), row[15])
+            end_coord_lat = '%s%02d.%02.2f' % (('N' if row[16] > 0 else 'S'), abs(row[16]), row[17])
+            end_coord_lon = '%s%03d.%02.2f' % (('E' if row[18] > 0 else 'W'), abs(row[18]), row[19])
+            
             try:
                 row[11] = row[11].decode('utf-8')
             except:
                 pass
-            row[12] = start_coord
-            row[13] = end_coord
-            del(row[14:20])
+
+            row[12] = start_coord_lat
+            row[13] = start_coord_lon
+            row[14] = end_coord_lat
+            row[15] = end_coord_lon
+            del(row[16:20])
+            #добавление вытянутых данных в список имеющихся станций
+            self.spindelegate0.addPrev(row[0])
             data.append(row)
         #вывод сообщения на статус-бар
         self.statusBar().showMessage(u'%s год, %s, %s съемка, %s' % (year, unicode(self.tripForm.ui.vesselComboBox.currentText()).split(u', ')[0], unicode(self.tripForm.ui.surveycomboBox.currentText()), unicode(self.tripForm.ui.objectComboBox.currentText())))
@@ -936,13 +937,29 @@ class MainView(QtGui.QMainWindow):
             row = list(row)
             row[1] = u'%s (%s)' % (row[1].decode('utf-8'), row[2].decode('utf-8'))
             del(row[2])
+            #print row[2]
+            self.commonCatchDelegate.dataAdded(row[1])            
             data_catch.append(row)
+
+
         if len(data_catch) > 0:
             self.ui.catchTableView.model().dbdata = data_catch
         self.ui.catchTableView.model().reset()
 
-        #сокрытие колонок в таблице уловов - ничего скрывать не надо! (вроде бы)
-
+        #отображение биоанализов.
+        #тут все не столь очевидно, как в случае с предыдущими таблицами.
+        #необходимо выбирать из нескольких таблиц данные для одного года, судна, рейса и наблюдателя
+        #идея такая - вначале выводим все для главной группы, указанной в настройках, а потом - для всего остального.
+        #или как-то так
+        data_bio = []
+        #м.б. попробовать сделать union?
+        #выбрать столбцы[группа] из bioanalis_группа where год, судно, рейс, наблюдатель равны нашим настройкам
+        for i in bio_hide_columns.keys():
+            rows = []
+            for j in bio_hide_columns[i]:
+                rows.append(bio_headers_dict.keys()[bio_headers_dict.values().index(j)])
+            print i, ', '.join(rows)
+            
     #Вот тут будем добавлять новую строчку после того, как будет достигнут конец строки
     def appendRow(self, current, prev):
         model = current.model()
@@ -1084,6 +1101,7 @@ class IntDelegate(QtGui.QStyledItemDelegate):
         QtGui.QStyledItemDelegate.__init__(self, parent)
         self.minmax = val_range
         self.parent = parent
+
     def createEditor(self, parent, option, index):
         self.parent = parent
         editor = QtGui.QSpinBox(parent)
@@ -1102,7 +1120,9 @@ class IntDelegate(QtGui.QStyledItemDelegate):
             editor.setValue(self.minmax[2])
         else:
             editor.setValue(value)
-
+            
+    def dataAdded(self, value):
+        self.emit(QtCore.SIGNAL("dataAdded"))
 
     def setModelData(self, editor, model, index):
         value = editor.value()
@@ -1153,6 +1173,10 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
         QtGui.QStyledItemDelegate.__init__(self, parent)
         self.prev_values = []
         self.values = [1, ]
+
+    def addPrev(self, value):
+        self.prev_values.append(value)
+        self.emit(QtCore.SIGNAL("dataAdded"), value)
 
     def createEditor(self, parent, option, index):
         editor = QtGui.QSpinBox(parent)
@@ -1236,11 +1260,7 @@ class TimeDelegate(QtGui.QStyledItemDelegate):
             
             editor.setTime(value)
 
-            
-            
-        
-            
-            
+                        
     def setModelData(self, editor, model, index):
         value = editor.time()
         model.setData(index, u'%02d:%02d' % (value.hour(), value.minute()), QtCore.Qt.EditRole)
@@ -1300,14 +1320,14 @@ class CoordValidator(QtGui.QRegExpValidator):
 	def fixup(self, inp):
             inp.replace('-', 'S')
             
-        def validate(self, inp, pos):
-            print inp, pos, self.regexp.indexIn(inp)
-            if self.regexp.indexIn(inp) == -1:
-                #if inp.length() > 8:
-                #    inp.replace(' ', '')
-                #    return (QtGui.QValidator.Intermediate, pos)
-                return (QtGui.QValidator.Intermediate, pos)
-            return (QtGui.QValidator.Acceptable, pos)
+        #def validate(self, inp, pos):
+        #    print inp, pos, self.regexp.indexIn(inp)
+        #    if self.regexp.indexIn(inp) == -1:
+        #        #if inp.length() > 8:
+        #        #    inp.replace(' ', '')
+        #        #    return (QtGui.QValidator.Intermediate, pos)
+        #        return (QtGui.QValidator.Intermediate, pos)
+        #    return (QtGui.QValidator.Acceptable, pos)
         
 class EditCommand(QtGui.QUndoCommand):
     def __init__(self, tablemodel, row, column, columns, prev_value, value, cursor, description):
