@@ -18,16 +18,17 @@ import psycopg2, psycopg2.extras
 from psycopg2.extensions import adapt
 
 #Настройки БД по умолчанию. Потом брать из файла настроек.
-dbname = "observ"
+dbname = "observer"
 user = 'annndrey'
 host = 'localhost'
 port = 5432
-passwd = 'andreygon'
+passwd = '654321'
 
 #надо добавить год, судно, номер рейса, наблюдатель в станции и уловы и сделать их нередактируемыми. 
 
 #получение списка колонок для каждой группы видов
 #species_columns = select column_name from information_schema.columns where table_name like '%[bio_group]';
+
 
 objects_dict = {'asteroidea':u'морские звезды',
 None:'',
@@ -921,7 +922,7 @@ class MainView(QtGui.QMainWindow):
             #speciesDelegate.addValue(u'')
         self.ui.catchTableView.setItemDelegateForColumn(1, speciesDelegate)
 
-        #пошла обработка таблицы уловов
+        #обработка таблицы уловов
         #speciescode = 
         select_query_catch = []
         for i in catch_headers:
@@ -974,8 +975,8 @@ class MainView(QtGui.QMainWindow):
             
             #print 'row', current.row(), prev.row(), maxrow
             #print 'column', current.column(), prev.column(), maxcolumn
-        else:
-            pass#print current.column()
+        #else:
+        #    pass#print current.column()
     
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -1036,9 +1037,7 @@ class TableModel(QtCore.QAbstractTableModel):
     def headerData(self, col, orientation, role):
         ## тут задаются заголовки
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-
-            #Для исправления ошибки при убирании столбца индекса релевантности
-            #при переходе от полнотекстового поиска к сложному при отображении всех столбцов
+            
             try:
                 return QtCore.QVariant(self.header[col])
             except IndexError:
@@ -1340,6 +1339,7 @@ class EditCommand(QtGui.QUndoCommand):
         self.value = value
         self.dbdata = self.model.dbdata
         self.cur = cursor
+        #** TODO Ввод данных в базу и сохранение
 
     def redo(self):
         index = self.model.index(self.row, self.column)
@@ -1382,9 +1382,6 @@ def main():
     #QtCore.QObject.connect(auth_form.ui, QtCore.SIGNAL('loginData'), main_window)
 
     sys.exit(app.exec_())
-
-
-
 
 if __name__ == "__main__":
     main()
