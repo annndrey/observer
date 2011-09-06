@@ -752,7 +752,11 @@ class MainView(QtGui.QMainWindow):
         #self.connect(self.ui.tripForm.objectComboBox, hide_bio_columns)
         #
         self.applyChanges()
-        
+
+        #Отмена и повтор
+        self.connect(self.ui.undoaction, QtCore.SIGNAL("triggered()"), self.undoStack.undo)
+        self.connect(self.ui.redoaction, QtCore.SIGNAL("triggered()"), self.undoStack.redo)
+
         #создание действий и клавиатурных сокращений.
         #переключение между табами
         self.connect(self.ui.prev_tab, QtCore.SIGNAL("triggered()"), self.rightTab)
@@ -768,6 +772,14 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.commonCatchDelegate, QtCore.SIGNAL('dataAdded'), self.showTab)
         self.connect(self.speciesBioDelegate, QtCore.SIGNAL('dataChanged'), self.showBioCols)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.showBioCols)
+
+
+
+
+
+
+
+
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
 
     def showBioCols(self, *args):
