@@ -892,7 +892,7 @@ class MainView(QtGui.QMainWindow):
             row[15] = end_coord_lon
             del(row[16:20])
             #добавление вытянутых данных в список имеющихся станций
-            self.spindelegate0.addPrev(row[0])
+            #self.spindelegate0.addPrev(row[0])
             data.append(row)
         #вывод сообщения на статус-бар
         self.statusBar().showMessage(u'%s год, %s, %s съемка, %s' % (year, unicode(self.tripForm.ui.vesselComboBox.currentText()).split(u', ')[0], unicode(self.tripForm.ui.surveycomboBox.currentText()), unicode(self.tripForm.ui.objectComboBox.currentText())))
@@ -1011,6 +1011,10 @@ class TableModel(QtCore.QAbstractTableModel):
         self.dbdata.insert(row, new_row)
         self.endInsertRows()
         return True
+    #Сделать более универсальным, чтобы можно было сравнивать не только 
+    #с int...
+    def getColumnData(self, column):
+        return [x[column].toInt()[0] for x in self.dbdata if isinstance(x[column], QtCore.QVariant)]
 
     def rowCount(self, parent):
         #кол-во строк
@@ -1181,12 +1185,13 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
     #** TODO SpinBoxDelegate - проверка
     def __init__(self, parent = None):
         QtGui.QStyledItemDelegate.__init__(self, parent)
+        
         self.prev_values = []
-        self.values = [1, ]
+        
 
-    def addPrev(self, value):
-        self.prev_values.append(value)
-        self.emit(QtCore.SIGNAL("dataAdded"), value)
+    #def addPrev(self, value):
+    #    self.prev_values.append(value)
+    #    self.emit(QtCore.SIGNAL("dataAdded"), value)
 
     def createEditor(self, parent, option, index):
         editor = QtGui.QSpinBox(parent)
@@ -1199,28 +1204,29 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
         ind = model.createIndex(index.row(), index.column())
 
         value = model.data(ind, QtCore.Qt.EditRole).toInt()[0]
-        print "setting data", value, editor.value()        
-        for i in model.dbdata:
-            try:
-                val = i[ind.column()].toInt()[0]
-
-                self.prev_values.append(val)
-            except:
-                pass
+        
+        #for i in model.dbdata:
+        #    try:
+        #        val = i[ind.column()].toInt()[0]
+        #
+        #        self.prev_values.append(val)
+        #    except:
+        #        pass
                         
         if value not in self.prev_values:
             editor.setValue(value)
         else:
-            
             editor.setValue(max(self.values) + 1)
 
     def setModelData(self, editor, model, index):
         value = editor.value()
-        if value not in self.prev_values:
+        
+        if value not in model.getColumnData(0):
             model.setData(index, value, QtCore.Qt.EditRole)
             self.emit(QtCore.SIGNAL("dataAdded"), value)
+            self.prev_values.append(value)
         
-
+        #print self.prev_values, value, "model, editor"
 class DateDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, parent = None):
         QtGui.QStyledItemDelegate.__init__(self, parent)
