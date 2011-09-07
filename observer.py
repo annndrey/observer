@@ -1014,7 +1014,7 @@ class TableModel(QtCore.QAbstractTableModel):
     #Сделать более универсальным, чтобы можно было сравнивать не только 
     #с int...
     def getColumnData(self, column):
-        return [x[column].toPyObject()[0] for x in self.dbdata if isinstance(x[column], QtCore.QVariant)]
+        return [x[column].toPyObject() for x in self.dbdata if isinstance(x[column], QtCore.QVariant)]
 
     def rowCount(self, parent):
         #кол-во строк
