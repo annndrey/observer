@@ -434,6 +434,7 @@ class TripForm(QtGui.QDialog):
         self.ui.setupUi(self)
 
 class AuthForm(QtGui.QDialog):
+    #Форма авторизации
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = AuthDialog()
@@ -445,14 +446,12 @@ class AuthForm(QtGui.QDialog):
         self.ui.lineEdit_4.setText(passwd)
 
 class MainView(QtGui.QMainWindow):
-    
     #Инициализация главного окна
     def __init__(self, dbname, host, post, user, passwd, parent = None):
         super(MainView, self).__init__()
         self.ui = MainWindow()
         self.ui.setupUi(self)
         self.undoStack = QtGui.QUndoStack(self)
-
         self.conn = psycopg2.connect("dbname='%s' user='%s' host='%s' port=%d  password='%s'" % (dbname, user, host, port, passwd))
         self.cur = self.conn.cursor()
         self.stations = [1, ]
@@ -529,6 +528,7 @@ class MainView(QtGui.QMainWindow):
 
         self.ui.tabWidget.setTabEnabled(1, False)
         self.ui.tabWidget.setTabEnabled(2, False)
+
         #Delegates
         #Делегаты для станций
 
@@ -592,6 +592,7 @@ class MainView(QtGui.QMainWindow):
             bottomDelegate.addValue(unicode(self.cur.fetchone()[0].decode('utf-8')))
         self.ui.stationsTableView.setItemDelegateForColumn(11, bottomDelegate)
         #орудие лова
+        #*** TODO Орудие лова
         #переделать. чтобы было select name from gear_spr where mtype = [int]
         #mtype брать из настроек рейса - тип съемки. 
         #то же самое для списка видов.
@@ -645,6 +646,7 @@ class MainView(QtGui.QMainWindow):
         self.catchStDelegate.values = self.stations
         self.ui.catchTableView.setItemDelegateForColumn(0, self.catchStDelegate)
         #вид
+        #*** TODO Делегат для вида
         #speciesDelegate = ComboBoxDelegate(parent = self.ui.catchTableView.model())
         #self.ui.catchTableView.setItemDelegateForColumn(1, speciesDelegate)
         #улов, вес
@@ -738,13 +740,11 @@ class MainView(QtGui.QMainWindow):
         
         #стадия развития гонады
         self.gonadeStage = LineEditDelegate(parent = self.ui.bioTableView.model())
-
         self.ui.bioTableView.setItemDelegateForColumn(15, self.gonadeStage)
         
         #стернальные шипы
         self.sternalSpines = ComboBoxDelegate(parent = self.ui.bioTableView.model())
         
-
         #self.connect(self.ui.tripForm.buttonBox, accepted, change_view)
         #change_view -> change stations, change_catch, change_bio
         #
@@ -772,6 +772,9 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.commonCatchDelegate, QtCore.SIGNAL('dataAdded'), self.showTab)
         self.connect(self.speciesBioDelegate, QtCore.SIGNAL('dataChanged'), self.showBioCols)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.showBioCols)
+        
+        #для удаления номеров станций при изменении данных
+        
 
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
 
@@ -834,6 +837,10 @@ class MainView(QtGui.QMainWindow):
 
     def addStation(self, data):
         self.stations.append(data)
+
+    def removeStation(self, data):
+        if data in self.stations:
+            self.stations.pop(data)
 
     def showColumns(self, table, columns):
         for i in columns:
@@ -953,6 +960,7 @@ class MainView(QtGui.QMainWindow):
         self.ui.catchTableView.model().reset()
 
         #отображение биоанализов.
+        #*** TODO Отображение биоанализов из базы
         #тут все не столь очевидно, как в случае с предыдущими таблицами.
         #необходимо выбирать из нескольких таблиц данные для одного года, судна, рейса и наблюдателя
         #идея такая - вначале выводим все для главной группы, указанной в настройках, а потом - для всего остального.
@@ -1049,7 +1057,7 @@ class TableModel(QtCore.QAbstractTableModel):
                 return QtCore.QVariant(self.header[col-1])
 
     def sort(self, Ncol, order):
-
+        #Сортировка данных
         self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
         self.dbdata = sorted(self.dbdata, key=operator.itemgetter(Ncol))
         if order == QtCore.Qt.DescendingOrder:
@@ -1058,13 +1066,11 @@ class TableModel(QtCore.QAbstractTableModel):
 
 
     def setData(self, index, value, role):
+        #добавление данных
         if index.isValid() and role == QtCore.Qt.EditRole:
-
             val = QtCore.QVariant(self.get_value(index))
-
             command = EditCommand(self, index.row(), index.column(), self.columns, val, QtCore.QVariant(value), self.cur, 'Edition of a single cell')
             self.undostack.push(command)
-
             return True
         else:
             return False
@@ -1172,7 +1178,7 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
     #Приятная особенность - этот делегат будет проверять,
     #чтобы каждая следующая станция не имела бы номера,
     #равного предыдущему
-
+    #** TODO SpinBoxDelegate - проверка
     def __init__(self, parent = None):
         QtGui.QStyledItemDelegate.__init__(self, parent)
         self.prev_values = []
@@ -1191,11 +1197,13 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
     def setEditorData(self, editor, index):
         model = index.model()
         ind = model.createIndex(index.row(), index.column())
-        
+
         value = model.data(ind, QtCore.Qt.EditRole).toInt()[0]
+        print "setting data", value, editor.value()        
         for i in model.dbdata:
             try:
                 val = i[ind.column()].toInt()[0]
+
                 self.prev_values.append(val)
             except:
                 pass
@@ -1203,6 +1211,7 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
         if value not in self.prev_values:
             editor.setValue(value)
         else:
+            
             editor.setValue(max(self.values) + 1)
 
     def setModelData(self, editor, model, index):
@@ -1210,6 +1219,7 @@ class SpinBoxDelegate(QtGui.QStyledItemDelegate):
         if value not in self.prev_values:
             model.setData(index, value, QtCore.Qt.EditRole)
             self.emit(QtCore.SIGNAL("dataAdded"), value)
+        
 
 class DateDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, parent = None):
