@@ -773,13 +773,6 @@ class MainView(QtGui.QMainWindow):
         self.connect(self.speciesBioDelegate, QtCore.SIGNAL('dataChanged'), self.showBioCols)
         self.connect(self.bioselectionModel, QtCore.SIGNAL("currentChanged(QModelIndex, QModelIndex)"), self.showBioCols)
 
-
-
-
-
-
-
-
     #Сокрытие и показ колонок в таблицах. Сделать в зависимости от вида/орудия лова. 
 
     def showBioCols(self, *args):
